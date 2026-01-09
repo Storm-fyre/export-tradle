@@ -732,31 +732,40 @@ function addGuessToUI(guessCountry, targetCountry) {
     // Check if this guess is the correct answer
     const isWinner = guessKey === targetKey;
 
-    let distText = "N/A", arrowText = "";
+    let distText = "N/A";
+    let arrowText = "";
+    let rawDist = null;
 
-    if (isWinner) {
-        // --- CHANGES START HERE ---
-        
-        // 1. Light green background for the winning entity
-        row.style.backgroundColor = "#eafaf1"; 
-        row.style.borderColor = "#27ae60"; // (Optional) Adds a green border
-        
-        // 2. No distance and No direction
-        distText = ""; 
-        arrowText = "🎉"; // (Optional) Shows a party popper, or leave as "" for completely blank
-        
-        // --- CHANGES END HERE ---
+    // 1. Calculate Distance
+    if (DISTANCES[guessKey] && DISTANCES[guessKey][targetKey] !== undefined) {
+        rawDist = Math.round(DISTANCES[guessKey][targetKey]);
+        distText = rawDist.toLocaleString() + " km";
+    }
+
+    // 2. Calculate Direction
+    // LOGIC: If distance is 0, DO NOT show direction. 
+    if (rawDist !== null && rawDist === 0) {
+        arrowText = ""; 
     } else {
-        // Standard logic for incorrect guesses
-        if (DISTANCES[guessKey] && DISTANCES[guessKey][targetKey] !== undefined) {
-            distText = Math.round(DISTANCES[guessKey][targetKey]).toLocaleString() + " km";
-        }
-
+        // Only calculate direction if distance is greater than 0
         if (DIRECTIONS[guessKey] && DIRECTIONS[guessKey][targetKey]) {
             const rawDir = DIRECTIONS[guessKey][targetKey];
             const correctDir = REVERSE_COMPASS[rawDir] || rawDir;
             arrowText = ARROW_MAP[correctDir] || "";
         }
+    }
+
+    // 3. Winner Specific Overrides
+    if (isWinner) {
+        // Light green background
+        row.style.backgroundColor = "#eafaf1"; 
+        row.style.borderColor = "#27ae60";
+        
+        // Hide distance text completely (as requested)
+        distText = ""; 
+        
+        // Ensure direction is empty
+        arrowText = ""; 
     }
 
     row.innerHTML = `<span class="history-name">${guessCountry.name}</span><span class="history-dist">${distText}</span><span class="history-dir">${arrowText}</span>`;
