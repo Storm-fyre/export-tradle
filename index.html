@@ -52,10 +52,16 @@
         table.history-table th { text-align: left; padding: 12px; background: #f8f9fa; border-bottom: 2px solid #e1e4e8; color: #2c3e50; }
         table.history-table td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
         
+        /* IMPROVEMENT 1: Make history rows look clickable */
+        table.history-table tbody tr { cursor: pointer; transition: background-color 0.15s ease; }
+        table.history-table tbody tr:hover { background-color: #f1f2f6; }
+
         .status-icon { font-size: 1.2rem; }
         .reveal-btn {
             background: #95a5a6; color: white; padding: 6px 12px; border-radius: 4px; 
             font-size: 0.8rem; cursor: help; border: none; user-select: none; width: 120px;
+            /* Ensure button interaction doesn't feel weird inside the clickable row */
+            position: relative; z-index: 2; 
         }
         .reveal-btn:active { background: #e67e22; }
         
@@ -777,13 +783,17 @@ function endGame(win, isReview = false) {
     ctrl.style.display = 'flex';
     const btn = document.getElementById('next-action-btn');
     
-    if (gameState.mode === 'practice' || gameState.mode === 'retry') {
+    // IMPROVEMENT 2: Handle 'retry' mode separately from 'practice'
+    if (gameState.mode === 'practice') {
+        // Practice loop -> Play another random game
         btn.textContent = "Play Another";
-        btn.onclick = startPracticeGame; // Starts fresh because we cleared storage
+        btn.onclick = startPracticeGame; 
     } else if (gameState.mode === 'daily') {
+        // Daily flow -> Go back to Daily Menu
         btn.textContent = "Back to Menu";
         btn.onclick = () => switchTab('daily');
     } else {
+        // History / Retry / Review flow -> Go back to History list
         btn.textContent = "Back to History";
         btn.onclick = () => switchTab('history');
     }
