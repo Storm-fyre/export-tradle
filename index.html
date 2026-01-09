@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Export Tradle</title>
     <style>
-        /* --- CSS STYLES (Includes Mobile & Font Fixes) --- */
+        /* --- CSS STYLES --- */
 
         /* Reset & Base */
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f7f9; margin: 0; padding: 1rem; color: #333; }
@@ -37,8 +37,50 @@
         .win { color: #27ae60; }
         .lose { color: #c0392b; }
 
-        .controls { display: flex; gap: 10px; justify-content: center; margin-bottom: 1rem; flex-wrap: wrap; }
-        input { padding: 12px; width: 300px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
+        .controls { 
+            display: flex; gap: 10px; justify-content: center; margin-bottom: 1rem; flex-wrap: wrap; 
+            position: relative; /* Important for absolute positioning the dropdown */
+            z-index: 50; 
+        }
+        
+        /* Custom Input Wrapper for Dropdown */
+        .input-wrapper {
+            position: relative;
+            width: 300px;
+        }
+
+        input { 
+            padding: 12px; width: 100%; box-sizing: border-box; 
+            border: 1px solid #ccc; border-radius: 4px; font-size: 16px; 
+        }
+        
+        /* CUSTOM DROPDOWN STYLES */
+        #suggestions-list {
+            position: absolute;
+            top: 100%; left: 0; right: 0;
+            background: white;
+            border: 1px solid #ccc;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            max-height: 250px;
+            overflow-y: auto;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            display: none; /* Hidden by default */
+            z-index: 1000;
+        }
+        .suggestion-item {
+            padding: 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            text-align: left;
+        }
+        .suggestion-item:hover {
+            background-color: #f0f8ff;
+        }
+        .suggestion-item strong {
+            color: #2c3e50;
+        }
+
         button { padding: 12px 24px; background: #2c3e50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 16px; transition: background 0.2s; }
         button:hover { background: #34495e; }
         button:disabled { background: #ccc; cursor: not-allowed; }
@@ -60,7 +102,6 @@
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
             fill: white;
             pointer-events: none;
-            /* Stronger shadow for readability on light colors */
             text-shadow: 0 0 3px rgba(0,0,0,0.8), 0 1px 2px rgba(0,0,0,1);
             font-weight: 500;
         }
@@ -86,7 +127,7 @@
             h1 { font-size: 1.6rem; }
             .game-status { flex-direction: column; align-items: flex-start; }
             .controls { flex-direction: column; }
-            input { width: 100%; box-sizing: border-box; }
+            .input-wrapper { width: 100%; }
             button { width: 100%; padding: 15px; }
 
             #tooltip.mobile-fixed {
@@ -120,7 +161,11 @@
         <div id="message-area"></div>
 
         <div class="controls">
-            <input list="countries-datalist" id="guess-input" placeholder="Type a country name..." autocomplete="off">
+            <!-- WRAPPED INPUT FOR CUSTOM DROPDOWN -->
+            <div class="input-wrapper">
+                <input type="text" id="guess-input" placeholder="Type a country name..." autocomplete="off">
+                <div id="suggestions-list"></div>
+            </div>
             <button id="guess-btn">GUESS</button>
             <button id="play-again-btn">PLAY AGAIN</button>
         </div>
@@ -130,7 +175,6 @@
 </div>
 
 <div id="tooltip"></div>
-<datalist id="countries-datalist"></datalist>
 
 <script>
 // --- GLOBAL VARIABLES (Populated via Fetch) ---
@@ -373,20 +417,12 @@ const ARROW_MAP = {
     "NE": "↗️", "NW": "↖️", "SE": "↘️", "SW": "↙️"
 };
 
-const datalist = document.getElementById('countries-datalist');
-COUNTRIES.forEach(c => {
-    const opt = document.createElement('option');
-    opt.value = c.name;
-    datalist.appendChild(opt);
-});
-
 // --- GAME STATE ---
 let targetCountry = null;
 let lives = 5;
 let isGameOver = false;
 
 // --- INITIALIZATION ---
-// This function loads the external JSON files before starting the game
 async function startApp() {
     try {
         document.getElementById('loader').style.display = 'block';
@@ -421,8 +457,13 @@ function initGame() {
     document.getElementById('game-title').style.color = "#2c3e50";
     document.getElementById('message-area').textContent = "";
     document.getElementById('message-area').className = "";
-    document.getElementById('guess-input').value = "";
-    document.getElementById('guess-input').disabled = false;
+    
+    // Reset Inputs
+    const input = document.getElementById('guess-input');
+    input.value = "";
+    input.disabled = false;
+    document.getElementById('suggestions-list').style.display = 'none';
+    
     document.getElementById('guess-btn').style.display = "inline-block";
     document.getElementById('play-again-btn').style.display = "none";
     document.getElementById('game-area').style.display = 'none';
@@ -430,28 +471,72 @@ function initGame() {
     document.getElementById('loader').textContent = "Fetching Mystery Data...";
     document.getElementById('total-export-display').textContent = "Total Exports: $--- B";
 
-    // --- UPDATED SELECTION LOGIC (Gentle Tilt - Bias 1.5) ---
-    // The COUNTRIES array is sorted from Largest (Index 0) to Smallest (Index N).
-    // Math.random() gives 0.0 to 1.0.
-    // Raising it to power 1.5 shifts the distribution towards 0 (Top Countries).
-    // Result: More likely to pick index 0-50, but index 200 is still possible.
-    const weightedRandom = Math.pow(Math.random(), 1.5);
-    const randomIndex = Math.floor(weightedRandom * COUNTRIES.length);
+    const randomIndex = Math.floor(Math.random() * COUNTRIES.length);
     targetCountry = COUNTRIES[randomIndex];
 
     fetchDataForCountry(targetCountry);
 }
 
+// --- CUSTOM DROPDOWN LOGIC ---
+const inputElement = document.getElementById('guess-input');
+const suggestionsList = document.getElementById('suggestions-list');
+
+inputElement.addEventListener('input', function() {
+    if (isGameOver) return;
+    const val = this.value.trim().toLowerCase();
+    suggestionsList.innerHTML = '';
+
+    if (!val) {
+        suggestionsList.style.display = 'none';
+        return;
+    }
+
+    // Filter using "STARTS WITH" logic
+    const matches = COUNTRIES.filter(c => c.name.toLowerCase().startsWith(val));
+
+    if (matches.length > 0) {
+        suggestionsList.style.display = 'block';
+        matches.forEach(match => {
+            const div = document.createElement('div');
+            div.className = 'suggestion-item';
+            // Bold the matching part
+            const matchName = match.name;
+            const prefix = matchName.substring(0, val.length);
+            const suffix = matchName.substring(val.length);
+            div.innerHTML = `<strong>${prefix}</strong>${suffix}`;
+            
+            div.addEventListener('click', () => {
+                inputElement.value = match.name;
+                suggestionsList.style.display = 'none';
+            });
+            suggestionsList.appendChild(div);
+        });
+    } else {
+        suggestionsList.style.display = 'none';
+    }
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+    if (e.target !== inputElement && e.target !== suggestionsList) {
+        suggestionsList.style.display = 'none';
+    }
+});
+
+// --- GAME LOGIC ---
+
 document.getElementById('guess-btn').addEventListener('click', handleGuess);
 document.getElementById('play-again-btn').addEventListener('click', initGame);
-document.getElementById('guess-input').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') handleGuess();
+inputElement.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        suggestionsList.style.display = 'none';
+        handleGuess();
+    }
 });
 
 function handleGuess() {
     if (isGameOver) return;
-    const input = document.getElementById('guess-input');
-    const val = input.value.trim();
+    const val = inputElement.value.trim();
     if (!val) return;
 
     const validCountry = COUNTRIES.find(c => c.name.toLowerCase() === val.toLowerCase());
@@ -465,7 +550,7 @@ function handleGuess() {
     } else {
         lives--;
         updateStatus(val);
-        input.value = "";
+        inputElement.value = "";
         if (lives <= 0) endGame(false);
     }
 }
@@ -500,16 +585,17 @@ function updateStatus(guessedName) {
         <span class="history-dir">${arrowText}</span>
     `;
 
-    historyContainer.appendChild(row);
+    // CHANGED TO PREPEND (Newest on Top)
+    historyContainer.prepend(row);
 }
 
 function endGame(win) {
     isGameOver = true;
     const msgArea = document.getElementById('message-area');
     const title = document.getElementById('game-title');
-    const input = document.getElementById('guess-input');
-
-    input.disabled = true;
+    
+    inputElement.disabled = true;
+    document.getElementById('suggestions-list').style.display = 'none'; // Ensure closed
     document.getElementById('guess-btn').style.display = "none";
     document.getElementById('play-again-btn').style.display = "inline-block";
 
