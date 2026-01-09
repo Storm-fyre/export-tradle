@@ -3,137 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Export Tradle</title>
+    <title>Export Tradle - Daily & Practice</title>
     <style>
         /* --- CSS STYLES --- */
+        :root {
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #27ae60;
+            --danger: #c0392b;
+            --light: #f4f7f9;
+            --border: #e1e4e8;
+        }
 
-        /* Reset & Base */
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f7f9; margin: 0; padding: 1rem; color: #333; }
-        .container { max-width: 1100px; margin: 0 auto; background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--light); margin: 0; padding: 0.5rem; color: #333; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); min-height: 80vh; }
+
+        /* Tabs */
+        .tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 1.5rem; }
+        .tab-btn { flex: 1; padding: 15px; border: none; background: none; cursor: pointer; font-size: 1rem; font-weight: bold; color: #7f8c8d; transition: all 0.2s; border-bottom: 3px solid transparent; }
+        .tab-btn:hover { background: #f8f9fa; }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+        /* Views */
+        .view-section { display: none; }
+        .view-section.active { display: block; }
 
         /* Header */
         header { text-align: center; margin-bottom: 1rem; }
-        h1 { color: #2c3e50; margin: 0 0 5px 0; font-size: 2rem; }
-        .subtitle { color: #7f8c8d; font-size: 1rem; margin-bottom: 1rem; }
+        h1 { color: var(--primary); margin: 0; font-size: 1.8rem; }
+        .subtitle { color: #7f8c8d; font-size: 0.9rem; margin-top: 5px; }
 
-        /* Stats Bar */
-        .game-status {
-            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
-            margin-bottom: 1rem; padding: 10px 15px; background: #f8f9fa;
-            border-radius: 8px; border: 1px solid #e1e4e8; font-size: 1.1rem; gap: 10px;
+        /* Daily Dashboard */
+        .daily-dashboard { text-align: center; padding: 20px; }
+        .daily-timer { font-size: 1.2rem; font-weight: bold; color: var(--primary); margin-bottom: 20px; }
+        .daily-slots { display: flex; justify-content: center; gap: 15px; margin-bottom: 30px; }
+        .slot-card { 
+            width: 80px; height: 100px; border: 2px solid var(--border); border-radius: 8px; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; transition: transform 0.2s; position: relative;
         }
-        .total-export { font-weight: bold; color: #2c3e50; }
+        .slot-card.locked { background: #eee; cursor: not-allowed; opacity: 0.7; }
+        .slot-card.active { border-color: var(--primary); box-shadow: 0 0 10px rgba(44, 62, 80, 0.2); transform: scale(1.05); }
+        .slot-card.won { border-color: var(--accent); background: #f0fff4; }
+        .slot-card.lost { border-color: var(--danger); background: #fff5f5; }
+        .slot-number { font-size: 1.5rem; font-weight: bold; margin-bottom: 5px; }
+        .slot-status { font-size: 1.2rem; }
 
-        /* Legend */
-        #legend { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 15px; min-height: 20px; }
-        .legend-item { width: 18px; height: 18px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.1); cursor: pointer; }
-
-        /* Chart */
-        #chart-wrapper { position: relative; width: 100%; margin-bottom: 1.5rem; }
-        #treemap-svg { width: 100%; background: #f0f0f0; border-radius: 4px; display: block; user-select: none; }
+        /* Game Area */
+        .game-status {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 15px; background: #f8f9fa; border-radius: 8px; 
+            border: 1px solid var(--border); margin-bottom: 1rem; font-weight: bold;
+        }
+        
+        /* Treemap & Legend */
+        #legend { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; margin-bottom: 15px; }
+        .legend-item { width: 15px; height: 15px; border-radius: 3px; cursor: help; }
+        #chart-wrapper { width: 100%; margin-bottom: 1rem; position: relative; }
+        #treemap-svg { width: 100%; background: #f0f0f0; border-radius: 4px; display: block; }
 
         /* Controls */
-        #message-area { text-align: center; font-size: 1.3rem; font-weight: bold; margin-bottom: 15px; min-height: 30px; }
-        .win { color: #27ae60; }
-        .lose { color: #c0392b; }
-
-        .controls { 
-            display: flex; gap: 10px; justify-content: center; margin-bottom: 1rem; flex-wrap: wrap; 
-            position: relative; /* Important for absolute positioning the dropdown */
-            z-index: 50; 
-        }
+        #message-area { text-align: center; font-size: 1.2rem; font-weight: bold; margin-bottom: 15px; min-height: 25px; }
+        .win-msg { color: var(--accent); }
+        .lose-msg { color: var(--danger); }
         
-        /* Custom Input Wrapper for Dropdown */
-        .input-wrapper {
-            position: relative;
-            width: 300px;
-        }
-
-        input { 
-            padding: 12px; width: 100%; box-sizing: border-box; 
-            border: 1px solid #ccc; border-radius: 4px; font-size: 16px; 
-        }
+        .controls { display: flex; gap: 10px; justify-content: center; margin-bottom: 1rem; position: relative; z-index: 50; flex-wrap: wrap; }
+        .input-wrapper { position: relative; width: 300px; max-width: 100%; }
+        input { padding: 12px; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
         
-        /* CUSTOM DROPDOWN STYLES */
         #suggestions-list {
-            position: absolute;
-            top: 100%; left: 0; right: 0;
-            background: white;
-            border: 1px solid #ccc;
-            border-top: none;
-            border-radius: 0 0 4px 4px;
-            max-height: 250px;
-            overflow-y: auto;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-            display: none; /* Hidden by default */
-            z-index: 1000;
+            position: absolute; top: 100%; left: 0; right: 0; background: white;
+            border: 1px solid #ccc; border-top: none; border-radius: 0 0 4px 4px;
+            max-height: 200px; overflow-y: auto; display: none; z-index: 1000;
         }
-        .suggestion-item {
-            padding: 12px;
-            cursor: pointer;
-            border-bottom: 1px solid #f0f0f0;
-            text-align: left;
-        }
-        .suggestion-item:hover {
-            background-color: #f0f8ff;
-        }
-        .suggestion-item strong {
-            color: #2c3e50;
-        }
+        .suggestion-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #f0f0f0; text-align: left; }
+        .suggestion-item:hover { background-color: #f0f8ff; }
 
-        button { padding: 12px 24px; background: #2c3e50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 16px; transition: background 0.2s; }
-        button:hover { background: #34495e; }
+        button { padding: 12px 20px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; }
         button:disabled { background: #ccc; cursor: not-allowed; }
-        #play-again-btn { background: #27ae60; display: none; }
+        .btn-retry { background: var(--accent); display: none; }
+        .btn-back { background: #7f8c8d; }
 
-        /* History */
-        #guess-history { display: flex; flex-direction: column; gap: 8px; max-width: 600px; margin: 20px auto 0 auto; }
-        .history-row { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #e1e4e8; padding: 10px 15px; border-radius: 6px; font-size: 0.95rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .history-name { font-weight: bold; color: #2c3e50; text-align: left; flex: 1; }
-        .history-dist { font-family: monospace; color: #7f8c8d; font-weight: 600; margin: 0 10px; }
-        .history-dir { font-size: 1.2rem; width: 30px; text-align: center; }
-
-        /* SVG Elements */
-        .section-group { transition: opacity 0.2s; }
-        .node-rect { stroke: #fff; stroke-width: 1px; transition: fill-opacity 0.1s; cursor: pointer; }
-        .node-rect:hover { fill-opacity: 0.85; }
-
-        .node-text {
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            fill: white;
-            pointer-events: none;
-            text-shadow: 0 0 3px rgba(0,0,0,0.8), 0 1px 2px rgba(0,0,0,1);
-            font-weight: 500;
+        /* History Table */
+        .history-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .history-table th, .history-table td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
+        .history-table th { background: #f8f9fa; color: var(--primary); }
+        .history-row { cursor: pointer; transition: background 0.1s; }
+        .history-row:hover { background: #f1f1f1; }
+        .status-icon { font-size: 1.2rem; }
+        
+        /* Hold to Reveal Button */
+        .reveal-btn {
+            background: #95a5a6; color: white; border: none; padding: 5px 10px; 
+            border-radius: 4px; font-size: 0.8rem; cursor: pointer; width: 120px;
+            user-select: none; -webkit-user-select: none;
         }
-        .node-percent {
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            fill: rgba(255,255,255,0.95);
-            pointer-events: none;
-            font-weight: 400;
-            text-shadow: 0 0 3px rgba(0,0,0,0.8);
+        .reveal-btn:active { background: var(--primary); }
+
+        /* Guess History List */
+        #guess-history { display: flex; flex-direction: column; gap: 5px; max-width: 600px; margin: 20px auto; }
+        .history-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: #fff; border: 1px solid var(--border); padding: 8px 12px; 
+            border-radius: 4px; font-size: 0.9rem; 
         }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2000;
+        }
+        .modal { background: white; padding: 2rem; border-radius: 8px; width: 90%; max-width: 400px; text-align: center; }
+        .modal h2 { margin-top: 0; color: var(--primary); }
+        .modal-buttons { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+        .modal-btn { flex: 1; padding: 15px; }
 
         /* Tooltip */
-        #tooltip { position: fixed; display: none; background: rgba(0, 0, 0, 0.95); color: #fff; padding: 10px 14px; border-radius: 4px; font-size: 14px; pointer-events: none; z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.2); max-width: 250px; }
-        #tooltip strong { display: block; margin-bottom: 4px; color: #fff; font-size: 15px; }
-        #tooltip .sub { color: #ccc; font-size: 12px; margin-bottom: 2px; }
+        #tooltip { position: fixed; display: none; background: rgba(0,0,0,0.9); color: #fff; padding: 8px 12px; border-radius: 4px; font-size: 13px; pointer-events: none; z-index: 1000; max-width: 200px; }
 
-        #loader { text-align: center; display: none; margin: 40px; font-size: 1.2rem; color: #2c3e50; }
+        /* SVG Styles */
+        .node-rect { stroke: #fff; stroke-width: 1px; cursor: pointer; transition: opacity 0.1s; }
+        .node-rect:hover { fill-opacity: 0.8; }
+        .node-text { fill: white; pointer-events: none; text-shadow: 0 0 2px rgba(0,0,0,0.5); font-weight: 500; }
 
-        /* Mobile Adjustments */
-        @media (max-width: 768px) {
-            body { padding: 0.5rem; }
-            .container { padding: 1rem; }
-            h1 { font-size: 1.6rem; }
-            .game-status { flex-direction: column; align-items: flex-start; }
+        @media (max-width: 600px) {
+            .container { padding: 0.5rem; }
+            .daily-slots { gap: 10px; }
+            .slot-card { width: 70px; height: 90px; }
             .controls { flex-direction: column; }
             .input-wrapper { width: 100%; }
-            button { width: 100%; padding: 15px; }
-
-            #tooltip.mobile-fixed {
-                top: auto !important; bottom: 20px !important; left: 50% !important;
-                transform: translateX(-50%); width: 90%; max-width: none; text-align: center;
-            }
+            button { width: 100%; }
         }
     </style>
 </head>
@@ -141,49 +140,160 @@
 
 <div class="container">
     <header>
-        <h1 id="game-title">Guess the Exporter</h1>
-        <div class="subtitle">Based on their exports (2022)</div>
+        <h1>Export Tradle</h1>
+        <div class="subtitle">Guess the country by its exports</div>
     </header>
 
-    <div class="game-status">
-        <div class="total-export" id="total-export-display">Total Exports: $--- B</div>
-        <div class="lives">Lives: <span id="lives-count">❤️❤️❤️❤️❤️</span></div>
+    <!-- TABS -->
+    <div class="tabs">
+        <button class="tab-btn" onclick="switchTab('daily')" id="tab-daily">Daily Challenge</button>
+        <button class="tab-btn active" onclick="switchTab('practice')" id="tab-practice">Practice</button>
+        <button class="tab-btn" onclick="switchTab('history')" id="tab-history">History</button>
     </div>
 
-    <div id="loader">Loading Game Assets...</div>
-
-    <div id="game-area" style="display: none;">
-        <div id="legend"></div>
-        <div id="chart-wrapper">
-            <svg id="treemap-svg" viewBox="0 0 1000 500" preserveAspectRatio="none"></svg>
-        </div>
-
-        <div id="message-area"></div>
-
-        <div class="controls">
-            <!-- WRAPPED INPUT FOR CUSTOM DROPDOWN -->
-            <div class="input-wrapper">
-                <input type="text" id="guess-input" placeholder="Type a country name..." autocomplete="off">
-                <div id="suggestions-list"></div>
+    <!-- VIEW: DAILY DASHBOARD -->
+    <div id="view-daily" class="view-section">
+        <div class="daily-dashboard">
+            <div class="daily-timer" id="daily-timer">Next Daily: --:--:--</div>
+            <p>Complete 3 puzzles every day!</p>
+            
+            <div class="daily-slots">
+                <div class="slot-card" id="slot-1" onclick="startDailyGame(1)">
+                    <div class="slot-number">1</div>
+                    <div class="slot-status">🔒</div>
+                </div>
+                <div class="slot-card" id="slot-2" onclick="startDailyGame(2)">
+                    <div class="slot-number">2</div>
+                    <div class="slot-status">🔒</div>
+                </div>
+                <div class="slot-card" id="slot-3" onclick="startDailyGame(3)">
+                    <div class="slot-number">3</div>
+                    <div class="slot-status">🔒</div>
+                </div>
             </div>
-            <button id="guess-btn">GUESS</button>
-            <button id="play-again-btn">PLAY AGAIN</button>
+            <div id="daily-complete-msg" style="display:none; color: var(--accent); font-weight:bold;">
+                🎉 All Daily Puzzles Completed! Come back tomorrow.
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW: GAME AREA (Used for Practice, Daily, and Review) -->
+    <div id="view-game" class="view-section active">
+        <div class="game-status">
+            <button class="btn-back" id="back-btn" onclick="exitGame()" style="width: auto; padding: 5px 15px;">&larr; Exit</button>
+            <span id="game-mode-label">Practice Mode</span>
+            <span id="lives-display">❤️❤️❤️❤️❤️</span>
         </div>
 
-        <div id="guess-history"></div>
+        <div id="loader" style="text-align: center; padding: 20px; display: none;">Loading Data...</div>
+
+        <div id="game-content" style="display: none;">
+            <div id="legend"></div>
+            <div id="chart-wrapper">
+                <svg id="treemap-svg" viewBox="0 0 1000 500" preserveAspectRatio="none"></svg>
+            </div>
+            
+            <div id="total-export-display" style="text-align:center; margin-bottom:10px; color:#555;"></div>
+            <div id="message-area"></div>
+
+            <div class="controls">
+                <div class="input-wrapper">
+                    <input type="text" id="guess-input" placeholder="Type a country name..." autocomplete="off">
+                    <div id="suggestions-list"></div>
+                </div>
+                <button id="guess-btn">GUESS</button>
+                <button id="play-again-btn" class="btn-retry">NEXT GAME</button>
+            </div>
+
+            <div id="guess-history"></div>
+        </div>
+    </div>
+
+    <!-- VIEW: HISTORY -->
+    <div id="view-history" class="view-section">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Game</th>
+                    <th>Result</th>
+                    <th>Answer</th>
+                </tr>
+            </thead>
+            <tbody id="history-list">
+                <!-- Populated by JS -->
+            </tbody>
+        </table>
+        <p style="text-align:center; color:#777; margin-top:20px;">Tap a row to review the game chart.</p>
+    </div>
+</div>
+
+<!-- MODAL FOR REVIEW/RETRY -->
+<div class="modal-overlay" id="review-modal">
+    <div class="modal">
+        <h2 id="modal-title">Game Review</h2>
+        <p>You missed this one. What would you like to do?</p>
+        <div class="modal-buttons">
+            <button class="modal-btn" style="background:var(--accent);" onclick="confirmRetry()">🔄 Try Again<br><small>(Practice)</small></button>
+            <button class="modal-btn" style="background:var(--secondary);" onclick="confirmView()">👁️ View Solution</button>
+        </div>
+        <div style="margin-top:15px;">
+            <button onclick="closeModal()" style="background:transparent; color:#777; width:auto;">Cancel</button>
+        </div>
     </div>
 </div>
 
 <div id="tooltip"></div>
 
 <script>
-// --- GLOBAL VARIABLES (Populated via Fetch) ---
+// --- DATA CONFIGURATION ---
+const API_BASE = "https://api-v2.oec.world/tesseract/data.jsonrecords";
+const CUBE = "trade_i_baci_a_22";
 let DISTANCES = {};
 let DIRECTIONS = {};
 
-// --- CONFIGURATION ---
-const API_BASE = "https://api-v2.oec.world/tesseract/data.jsonrecords";
-const CUBE = "trade_i_baci_a_22";
+// --- LIST OF COUNTRIES (INDEX IS CRITICAL FOR ID) ---
+const COUNTRIES = [
+  { "name": "United States", "id": "nausa" }, { "name": "China", "id": "aschn" }, { "name": "Germany", "id": "eudeu" }, { "name": "Japan", "id": "asjpn" }, { "name": "India", "id": "asind" },
+  { "name": "United Kingdom", "id": "eugbr" }, { "name": "France", "id": "eufra" }, { "name": "Brazil", "id": "sabra" }, { "name": "Italy", "id": "euita" }, { "name": "Canada", "id": "nacan" },
+  { "name": "Russia", "id": "eurus" }, { "name": "Mexico", "id": "namex" }, { "name": "Australia", "id": "ocaus" }, { "name": "South Korea", "id": "askor" }, { "name": "Spain", "id": "euesp" },
+  { "name": "Indonesia", "id": "asidn" }, { "name": "Saudi Arabia", "id": "assau" }, { "name": "Turkey", "id": "astur" }, { "name": "Netherlands", "id": "eunld" }, { "name": "Switzerland", "id": "euche" },
+  { "name": "Poland", "id": "eupol" }, { "name": "Argentina", "id": "saarg" }, { "name": "Belgium", "id": "eubel" }, { "name": "Sweden", "id": "euswe" }, { "name": "Ireland", "id": "euirl" },
+  { "name": "Austria", "id": "euaut" }, { "name": "Thailand", "id": "astha" }, { "name": "United Arab Emirates", "id": "asare" }, { "name": "Singapore", "id": "assgp" }, { "name": "Norway", "id": "eunor" },
+  { "name": "Israel", "id": "asisr" }, { "name": "Vietnam", "id": "asvnm" }, { "name": "Philippines", "id": "asphl" }, { "name": "Bangladesh", "id": "asbgd" }, { "name": "Iran", "id": "asirn" },
+  { "name": "Malaysia", "id": "asmys" }, { "name": "Denmark", "id": "eudnk" }, { "name": "Colombia", "id": "sacol" }, { "name": "South Africa", "id": "afzaf" }, { "name": "Romania", "id": "eurou" },
+  { "name": "Egypt", "id": "afegy" }, { "name": "Pakistan", "id": "aspak" }, { "name": "Chile", "id": "sachl" }, { "name": "Czech Republic", "id": "eucze" }, { "name": "Finland", "id": "eufin" },
+  { "name": "Portugal", "id": "euprt" }, { "name": "Kazakhstan", "id": "askaz" }, { "name": "Peru", "id": "saper" }, { "name": "Algeria", "id": "afdza" }, { "name": "Iraq", "id": "asirq" },
+  { "name": "Nigeria", "id": "afnga" }, { "name": "Hungary", "id": "euhun" }, { "name": "New Zealand", "id": "ocnzl" }, { "name": "Greece", "id": "eugrc" }, { "name": "Qatar", "id": "asqat" },
+  { "name": "Kuwait", "id": "askwt" }, { "name": "Ukraine", "id": "euukr" }, { "name": "Morocco", "id": "afmar" }, { "name": "Ethiopia", "id": "afeth" }, { "name": "Slovakia", "id": "eusvk" },
+  { "name": "Ecuador", "id": "saecu" }, { "name": "Dominican Republic", "id": "nadom" }, { "name": "Sri Lanka", "id": "aslka" }, { "name": "Guatemala", "id": "nagtm" }, { "name": "Oman", "id": "asomn" },
+  { "name": "Cuba", "id": "nacub" }, { "name": "Bulgaria", "id": "eubgr" }, { "name": "Venezuela", "id": "saven" }, { "name": "Kenya", "id": "afken" }, { "name": "Uzbekistan", "id": "asuzb" },
+  { "name": "Angola", "id": "afago" }, { "name": "Costa Rica", "id": "nacri" }, { "name": "Luxembourg", "id": "eulux" }, { "name": "Croatia", "id": "euhrv" }, { "name": "Panama", "id": "napan" },
+  { "name": "Cote d'Ivoire", "id": "afciv" }, { "name": "Uruguay", "id": "saury" }, { "name": "Turkmenistan", "id": "astkm" }, { "name": "Serbia", "id": "eusrb" }, { "name": "Lithuania", "id": "eultu" },
+  { "name": "Tanzania", "id": "aftza" }, { "name": "Azerbaijan", "id": "asaze" }, { "name": "Ghana", "id": "afgha" }, { "name": "Slovenia", "id": "eusvn" }, { "name": "Belarus", "id": "eublr" },
+  { "name": "Congo (Dem. Rep.)", "id": "afcod" }, { "name": "Myanmar", "id": "asmmr" }, { "name": "Uganda", "id": "afuga" }, { "name": "Tunisia", "id": "aftun" }, { "name": "Jordan", "id": "asjor" },
+  { "name": "Cameroon", "id": "afcmr" }, { "name": "Bolivia", "id": "sabol" }, { "name": "Paraguay", "id": "sapry" }, { "name": "Libya", "id": "aflby" }, { "name": "Bahrain", "id": "asbhr" },
+  { "name": "Latvia", "id": "eulva" }, { "name": "Nepal", "id": "asnpl" }, { "name": "Estonia", "id": "euest" }, { "name": "North Korea", "id": "askpr" }, { "name": "Sudan", "id": "afsdn" },
+  { "name": "El Salvador", "id": "naslv" }, { "name": "Honduras", "id": "nahnd" }, { "name": "Papua New Guinea", "id": "ocpng" }, { "name": "Cyprus", "id": "eucyp" }, { "name": "Cambodia", "id": "askhm" },
+  { "name": "Zambia", "id": "afzmb" }, { "name": "Iceland", "id": "euisl" }, { "name": "Senegal", "id": "afsen" }, { "name": "Trinidad and Tobago", "id": "natto" }, { "name": "Zimbabwe", "id": "afzwe" },
+  { "name": "Bosnia and Herzegovina", "id": "eubih" }, { "name": "Georgia", "id": "asgeo" }, { "name": "Guinea", "id": "afgin" }, { "name": "Lebanon", "id": "aslbn" }, { "name": "Haiti", "id": "nahti" },
+  { "name": "Gabon", "id": "afgab" }, { "name": "Armenia", "id": "asarm" }, { "name": "Burkina Faso", "id": "afbfa" }, { "name": "Mali", "id": "afmli" }, { "name": "Mozambique", "id": "afmoz" },
+  { "name": "Palestine", "id": "aspse" }, { "name": "Albania", "id": "eualb" }, { "name": "Botswana", "id": "afbwa" }, { "name": "Malta", "id": "eumlt" }, { "name": "Benin", "id": "afben" },
+  { "name": "Syria", "id": "assyr" }, { "name": "Mongolia", "id": "asmng" }, { "name": "Equatorial Guinea", "id": "afgnq" }, { "name": "Guyana", "id": "saguy" }, { "name": "Madagascar", "id": "afmdg" },
+  { "name": "Nicaragua", "id": "nanic" }, { "name": "Niger", "id": "afner" }, { "name": "Jamaica", "id": "najam" }, { "name": "Laos", "id": "aslao" }, { "name": "Moldova", "id": "eumda" },
+  { "name": "Congo (Republic)", "id": "afcog" }, { "name": "North Macedonia", "id": "eumkd" }, { "name": "Rwanda", "id": "afrwa" }, { "name": "Namibia", "id": "afnam" }, { "name": "Afghanistan", "id": "asafg" },
+  { "name": "Bahamas", "id": "nabhs" }, { "name": "Chad", "id": "aftcd" }, { "name": "Malawi", "id": "afmwi" }, { "name": "Monaco", "id": "eumco" }, { "name": "Brunei", "id": "asbrn" },
+  { "name": "Mauritius", "id": "afmus" }, { "name": "Tajikistan", "id": "astjk" }, { "name": "Kyrgyzstan", "id": "askgz" }, { "name": "Mauritania", "id": "afmrt" }, { "name": "Somalia", "id": "afsom" },
+  { "name": "Togo", "id": "aftgo" }, { "name": "Liechtenstein", "id": "eulie" }, { "name": "Yemen", "id": "asyem" }, { "name": "Maldives", "id": "asmdv" }, { "name": "Barbados", "id": "nabrb" },
+  { "name": "South Sudan", "id": "afssd" }, { "name": "Montenegro", "id": "eumne" }, { "name": "Fiji", "id": "ocfji" }, { "name": "Eswatini", "id": "afswz" }, { "name": "Liberia", "id": "aflbr" },
+  { "name": "Sierra Leone", "id": "afsle" }, { "name": "Djibouti", "id": "afdji" }, { "name": "Andorra", "id": "euand" }, { "name": "Suriname", "id": "sasur" }, { "name": "Burundi", "id": "afbdi" },
+  { "name": "Timor-Leste", "id": "astls" }, { "name": "Bhutan", "id": "asbtn" }, { "name": "Central African Republic", "id": "afcaf" }, { "name": "Belize", "id": "nablz" }, { "name": "Gambia", "id": "afgmb" },
+  { "name": "Eritrea", "id": "aferi" }, { "name": "Saint Lucia", "id": "nalca" }, { "name": "Cape Verde", "id": "afcpv" }, { "name": "Antigua and Barbuda", "id": "naatg" }, { "name": "Seychelles", "id": "afsyc" },
+  { "name": "Guinea-Bissau", "id": "afgnb" }, { "name": "Solomon Islands", "id": "ocslb" }, { "name": "San Marino", "id": "eusmr" }, { "name": "Lesotho", "id": "aflso" }, { "name": "Comoros", "id": "afcom" },
+  { "name": "Saint Kitts and Nevis", "id": "nakna" }, { "name": "Vanuatu", "id": "ocvut" }, { "name": "Saint Vincent and the Grenadines", "id": "navct" }, { "name": "Samoa", "id": "ocwsm" },
+  { "name": "Sao Tome and Principe", "id": "afstp" }, { "name": "Dominica", "id": "nadma" }, { "name": "Grenada", "id": "nagrd" }, { "name": "Micronesia", "id": "ocfsm" }, { "name": "Tonga", "id": "octon" },
+  { "name": "Marshall Islands", "id": "ocmhl" }, { "name": "Palau", "id": "ocplw" }, { "name": "Kiribati", "id": "ockir" }, { "name": "Nauru", "id": "ocnru" }, { "name": "Tuvalu", "id": "octuv" }
+];
 
 const SECTION_MAPPING = [
     { id: 1, name: "Livestock & Animal Produce", color: "#F0E68C", chapters: [1, 2, 3, 4, 5] },
@@ -209,451 +319,454 @@ const SECTION_MAPPING = [
     { id: 21, name: "Arts & Antiques", color: "#616161", chapters: [97, 98, 99] }
 ];
 
-const COUNTRIES = [
-  { "name": "United States", "id": "nausa" },
-  { "name": "China", "id": "aschn" },
-  { "name": "Germany", "id": "eudeu" },
-  { "name": "Japan", "id": "asjpn" },
-  { "name": "India", "id": "asind" },
-  { "name": "United Kingdom", "id": "eugbr" },
-  { "name": "France", "id": "eufra" },
-  { "name": "Brazil", "id": "sabra" },
-  { "name": "Italy", "id": "euita" },
-  { "name": "Canada", "id": "nacan" },
-  { "name": "Russia", "id": "eurus" },
-  { "name": "Mexico", "id": "namex" },
-  { "name": "Australia", "id": "ocaus" },
-  { "name": "South Korea", "id": "askor" },
-  { "name": "Spain", "id": "euesp" },
-  { "name": "Indonesia", "id": "asidn" },
-  { "name": "Saudi Arabia", "id": "assau" },
-  { "name": "Turkey", "id": "astur" },
-  { "name": "Netherlands", "id": "eunld" },
-  { "name": "Switzerland", "id": "euche" },
-  { "name": "Poland", "id": "eupol" },
-  { "name": "Argentina", "id": "saarg" },
-  { "name": "Belgium", "id": "eubel" },
-  { "name": "Sweden", "id": "euswe" },
-  { "name": "Ireland", "id": "euirl" },
-  { "name": "Austria", "id": "euaut" },
-  { "name": "Thailand", "id": "astha" },
-  { "name": "United Arab Emirates", "id": "asare" },
-  { "name": "Singapore", "id": "assgp" },
-  { "name": "Norway", "id": "eunor" },
-  { "name": "Israel", "id": "asisr" },
-  { "name": "Vietnam", "id": "asvnm" },
-  { "name": "Philippines", "id": "asphl" },
-  { "name": "Bangladesh", "id": "asbgd" },
-  { "name": "Iran", "id": "asirn" },
-  { "name": "Malaysia", "id": "asmys" },
-  { "name": "Denmark", "id": "eudnk" },
-  { "name": "Colombia", "id": "sacol" },
-  { "name": "South Africa", "id": "afzaf" },
-  { "name": "Romania", "id": "eurou" },
-  { "name": "Egypt", "id": "afegy" },
-  { "name": "Pakistan", "id": "aspak" },
-  { "name": "Chile", "id": "sachl" },
-  { "name": "Czech Republic", "id": "eucze" },
-  { "name": "Finland", "id": "eufin" },
-  { "name": "Portugal", "id": "euprt" },
-  { "name": "Kazakhstan", "id": "askaz" },
-  { "name": "Peru", "id": "saper" },
-  { "name": "Algeria", "id": "afdza" },
-  { "name": "Iraq", "id": "asirq" },
-  { "name": "Nigeria", "id": "afnga" },
-  { "name": "Hungary", "id": "euhun" },
-  { "name": "New Zealand", "id": "ocnzl" },
-  { "name": "Greece", "id": "eugrc" },
-  { "name": "Qatar", "id": "asqat" },
-  { "name": "Kuwait", "id": "askwt" },
-  { "name": "Ukraine", "id": "euukr" },
-  { "name": "Morocco", "id": "afmar" },
-  { "name": "Ethiopia", "id": "afeth" },
-  { "name": "Slovakia", "id": "eusvk" },
-  { "name": "Ecuador", "id": "saecu" },
-  { "name": "Dominican Republic", "id": "nadom" },
-  { "name": "Sri Lanka", "id": "aslka" },
-  { "name": "Guatemala", "id": "nagtm" },
-  { "name": "Oman", "id": "asomn" },
-  { "name": "Cuba", "id": "nacub" },
-  { "name": "Bulgaria", "id": "eubgr" },
-  { "name": "Venezuela", "id": "saven" },
-  { "name": "Kenya", "id": "afken" },
-  { "name": "Uzbekistan", "id": "asuzb" },
-  { "name": "Angola", "id": "afago" },
-  { "name": "Costa Rica", "id": "nacri" },
-  { "name": "Luxembourg", "id": "eulux" },
-  { "name": "Croatia", "id": "euhrv" },
-  { "name": "Panama", "id": "napan" },
-  { "name": "Cote d'Ivoire", "id": "afciv" },
-  { "name": "Uruguay", "id": "saury" },
-  { "name": "Turkmenistan", "id": "astkm" },
-  { "name": "Serbia", "id": "eusrb" },
-  { "name": "Lithuania", "id": "eultu" },
-  { "name": "Tanzania", "id": "aftza" },
-  { "name": "Azerbaijan", "id": "asaze" },
-  { "name": "Ghana", "id": "afgha" },
-  { "name": "Slovenia", "id": "eusvn" },
-  { "name": "Belarus", "id": "eublr" },
-  { "name": "Congo (Dem. Rep.)", "id": "afcod" },
-  { "name": "Myanmar", "id": "asmmr" },
-  { "name": "Uganda", "id": "afuga" },
-  { "name": "Tunisia", "id": "aftun" },
-  { "name": "Jordan", "id": "asjor" },
-  { "name": "Cameroon", "id": "afcmr" },
-  { "name": "Bolivia", "id": "sabol" },
-  { "name": "Paraguay", "id": "sapry" },
-  { "name": "Libya", "id": "aflby" },
-  { "name": "Bahrain", "id": "asbhr" },
-  { "name": "Latvia", "id": "eulva" },
-  { "name": "Nepal", "id": "asnpl" },
-  { "name": "Estonia", "id": "euest" },
-  { "name": "North Korea", "id": "askpr" },
-  { "name": "Sudan", "id": "afsdn" },
-  { "name": "El Salvador", "id": "naslv" },
-  { "name": "Honduras", "id": "nahnd" },
-  { "name": "Papua New Guinea", "id": "ocpng" },
-  { "name": "Cyprus", "id": "eucyp" },
-  { "name": "Cambodia", "id": "askhm" },
-  { "name": "Zambia", "id": "afzmb" },
-  { "name": "Iceland", "id": "euisl" },
-  { "name": "Senegal", "id": "afsen" },
-  { "name": "Trinidad and Tobago", "id": "natto" },
-  { "name": "Zimbabwe", "id": "afzwe" },
-  { "name": "Bosnia and Herzegovina", "id": "eubih" },
-  { "name": "Georgia", "id": "asgeo" },
-  { "name": "Guinea", "id": "afgin" },
-  { "name": "Lebanon", "id": "aslbn" },
-  { "name": "Haiti", "id": "nahti" },
-  { "name": "Gabon", "id": "afgab" },
-  { "name": "Armenia", "id": "asarm" },
-  { "name": "Burkina Faso", "id": "afbfa" },
-  { "name": "Mali", "id": "afmli" },
-  { "name": "Mozambique", "id": "afmoz" },
-  { "name": "Palestine", "id": "aspse" },
-  { "name": "Albania", "id": "eualb" },
-  { "name": "Botswana", "id": "afbwa" },
-  { "name": "Malta", "id": "eumlt" },
-  { "name": "Benin", "id": "afben" },
-  { "name": "Syria", "id": "assyr" },
-  { "name": "Mongolia", "id": "asmng" },
-  { "name": "Equatorial Guinea", "id": "afgnq" },
-  { "name": "Guyana", "id": "saguy" },
-  { "name": "Madagascar", "id": "afmdg" },
-  { "name": "Nicaragua", "id": "nanic" },
-  { "name": "Niger", "id": "afner" },
-  { "name": "Jamaica", "id": "najam" },
-  { "name": "Laos", "id": "aslao" },
-  { "name": "Moldova", "id": "eumda" },
-  { "name": "Congo (Republic)", "id": "afcog" },
-  { "name": "North Macedonia", "id": "eumkd" },
-  { "name": "Rwanda", "id": "afrwa" },
-  { "name": "Namibia", "id": "afnam" },
-  { "name": "Afghanistan", "id": "asafg" },
-  { "name": "Bahamas", "id": "nabhs" },
-  { "name": "Chad", "id": "aftcd" },
-  { "name": "Malawi", "id": "afmwi" },
-  { "name": "Monaco", "id": "eumco" },
-  { "name": "Brunei", "id": "asbrn" },
-  { "name": "Mauritius", "id": "afmus" },
-  { "name": "Tajikistan", "id": "astjk" },
-  { "name": "Kyrgyzstan", "id": "askgz" },
-  { "name": "Mauritania", "id": "afmrt" },
-  { "name": "Somalia", "id": "afsom" },
-  { "name": "Togo", "id": "aftgo" },
-  { "name": "Liechtenstein", "id": "eulie" },
-  { "name": "Yemen", "id": "asyem" },
-  { "name": "Maldives", "id": "asmdv" },
-  { "name": "Barbados", "id": "nabrb" },
-  { "name": "South Sudan", "id": "afssd" },
-  { "name": "Montenegro", "id": "eumne" },
-  { "name": "Fiji", "id": "ocfji" },
-  { "name": "Eswatini", "id": "afswz" },
-  { "name": "Liberia", "id": "aflbr" },
-  { "name": "Sierra Leone", "id": "afsle" },
-  { "name": "Djibouti", "id": "afdji" },
-  { "name": "Andorra", "id": "euand" },
-  { "name": "Suriname", "id": "sasur" },
-  { "name": "Burundi", "id": "afbdi" },
-  { "name": "Timor-Leste", "id": "astls" },
-  { "name": "Bhutan", "id": "asbtn" },
-  { "name": "Central African Republic", "id": "afcaf" },
-  { "name": "Belize", "id": "nablz" },
-  { "name": "Gambia", "id": "afgmb" },
-  { "name": "Eritrea", "id": "aferi" },
-  { "name": "Saint Lucia", "id": "nalca" },
-  { "name": "Cape Verde", "id": "afcpv" },
-  { "name": "Antigua and Barbuda", "id": "naatg" },
-  { "name": "Seychelles", "id": "afsyc" },
-  { "name": "Guinea-Bissau", "id": "afgnb" },
-  { "name": "Solomon Islands", "id": "ocslb" },
-  { "name": "San Marino", "id": "eusmr" },
-  { "name": "Lesotho", "id": "aflso" },
-  { "name": "Comoros", "id": "afcom" },
-  { "name": "Saint Kitts and Nevis", "id": "nakna" },
-  { "name": "Vanuatu", "id": "ocvut" },
-  { "name": "Saint Vincent and the Grenadines", "id": "navct" },
-  { "name": "Samoa", "id": "ocwsm" },
-  { "name": "Sao Tome and Principe", "id": "afstp" },
-  { "name": "Dominica", "id": "nadma" },
-  { "name": "Grenada", "id": "nagrd" },
-  { "name": "Micronesia", "id": "ocfsm" },
-  { "name": "Tonga", "id": "octon" },
-  { "name": "Marshall Islands", "id": "ocmhl" },
-  { "name": "Palau", "id": "ocplw" },
-  { "name": "Kiribati", "id": "ockir" },
-  { "name": "Nauru", "id": "ocnru" },
-  { "name": "Tuvalu", "id": "octuv" }
-];
-
-const REVERSE_COMPASS = {
-    "N": "S", "S": "N", "E": "W", "W": "E",
-    "NE": "SW", "NW": "SE", "SE": "NW", "SW": "NE"
-};
-
-const ARROW_MAP = {
-    "N": "⬆️", "S": "⬇️", "E": "➡️", "W": "⬅️",
-    "NE": "↗️", "NW": "↖️", "SE": "↘️", "SW": "↙️"
-};
+const REVERSE_COMPASS = { "N": "S", "S": "N", "E": "W", "W": "E", "NE": "SW", "NW": "SE", "SE": "NW", "SW": "NE" };
+const ARROW_MAP = { "N": "⬆️", "S": "⬇️", "E": "➡️", "W": "⬅️", "NE": "↗️", "NW": "↖️", "SE": "↘️", "SW": "↙️" };
 
 // --- GAME STATE ---
-let targetCountry = null;
-let lives = 5;
-let isGameOver = false;
+let gameState = {
+    mode: 'practice', // 'daily', 'practice', 'review'
+    dailySlot: null,  // 1, 2, 3
+    targetIndex: null,
+    lives: 5,
+    guesses: [],      // Array of country indices
+    isOver: false,
+    isGhost: false    // True if playing a lost daily game just for fun
+};
+
+// --- STORAGE MANAGER ---
+class HistoryManager {
+    static KEY = 'tradle_history_v1';
+
+    static get() {
+        const stored = localStorage.getItem(this.KEY);
+        return stored ? JSON.parse(stored) : { games: {} };
+    }
+
+    static save(data) {
+        localStorage.setItem(this.KEY, JSON.stringify(data));
+    }
+
+    static getDaily(dateStr) {
+        const data = this.get();
+        if (!data.games[dateStr]) {
+            data.games[dateStr] = { 1: null, 2: null, 3: null };
+            this.save(data);
+        }
+        return data.games[dateStr];
+    }
+
+    static saveDailyResult(dateStr, slot, result) {
+        // result: { won: bool, target: int, guesses: [int, int] }
+        const data = this.get();
+        if (!data.games[dateStr]) data.games[dateStr] = {};
+        data.games[dateStr][slot] = result;
+        this.save(data);
+    }
+}
+
+// --- SEEDED RNG (Mulberry32) ---
+function seededRandom(seed) {
+    let t = seed += 0x6D2B79F5;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+
+function getDailyPuzzles(dateStr) {
+    // Generate 3 unique indices based on date string (YYYY-MM-DD)
+    // Simple hash of date string to integer
+    let hash = 0;
+    for (let i = 0; i < dateStr.length; i++) hash = dateStr.charCodeAt(i) + ((hash << 5) - hash);
+    
+    const indices = [];
+    let attempt = 0;
+    while(indices.length < 3) {
+        const rand = seededRandom(hash + attempt);
+        const idx = Math.floor(rand * COUNTRIES.length);
+        if (!indices.includes(idx)) indices.push(idx);
+        attempt++;
+    }
+    return indices;
+}
+
+function getISTDate() {
+    return new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"}).split(',')[0].split('/').map(n => n.padStart(2, '0')).join('-');
+    // Note: locales can vary, let's make it robust:
+    const d = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
 
 // --- INITIALIZATION ---
 async function startApp() {
     try {
-        document.getElementById('loader').style.display = 'block';
-        document.getElementById('loader').textContent = "Loading Game Assets...";
-
-        const [distRes, dirRes] = await Promise.all([
-            fetch('distances.json'),
-            fetch('directions.json')
-        ]);
-
-        if (!distRes.ok || !dirRes.ok) throw new Error("Failed to load JSON files");
-
+        const [distRes, dirRes] = await Promise.all([ fetch('distances.json'), fetch('directions.json') ]);
         DISTANCES = await distRes.json();
         DIRECTIONS = await dirRes.json();
-
-        initGame();
+        
+        setupInput();
+        updateDailyDashboard();
+        startCountdown();
+        
+        // Default to Practice
+        switchTab('practice');
     } catch (err) {
-        document.getElementById('loader').innerHTML =
-            `Error loading game files.<br>Ensure distances.json and directions.json are in the same folder.<br>${err.message}`;
+        alert("Error loading game assets. Please refresh.");
+        console.error(err);
     }
 }
 
-// Start the loading process
-startApp();
-
-function initGame() {
-    lives = 5;
-    isGameOver = false;
-    document.getElementById('lives-count').textContent = "❤️".repeat(lives);
-    document.getElementById('guess-history').innerHTML = "";
-    document.getElementById('game-title').textContent = "Guess the Exporter";
-    document.getElementById('game-title').style.color = "#2c3e50";
-    document.getElementById('message-area').textContent = "";
-    document.getElementById('message-area').className = "";
+// --- VIEW MANAGEMENT ---
+function switchTab(tab) {
+    document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
     
-    // Reset Inputs
-    const input = document.getElementById('guess-input');
-    input.value = "";
-    input.disabled = false;
-    document.getElementById('suggestions-list').style.display = 'none';
-    
-    document.getElementById('guess-btn').style.display = "inline-block";
-    document.getElementById('play-again-btn').style.display = "none";
-    document.getElementById('game-area').style.display = 'none';
-    document.getElementById('loader').style.display = 'block';
-    document.getElementById('loader').textContent = "Fetching Mystery Data...";
-    document.getElementById('total-export-display').textContent = "Total Exports: $--- B";
+    document.getElementById(`view-${tab === 'practice' ? 'game' : tab}`).classList.add('active');
+    document.getElementById(`tab-${tab}`).classList.add('active');
 
-    const randomIndex = Math.floor(Math.random() * COUNTRIES.length);
-    targetCountry = COUNTRIES[randomIndex];
-
-    fetchDataForCountry(targetCountry);
+    if (tab === 'practice') {
+        startPracticeGame();
+    } else if (tab === 'daily') {
+        updateDailyDashboard();
+    } else if (tab === 'history') {
+        renderHistory();
+    }
 }
 
-// --- CUSTOM DROPDOWN LOGIC ---
-const inputElement = document.getElementById('guess-input');
-const suggestionsList = document.getElementById('suggestions-list');
+function exitGame() {
+    if (gameState.mode === 'daily') switchTab('daily');
+    else if (gameState.mode === 'review') switchTab('history');
+    else startPracticeGame();
+}
 
-inputElement.addEventListener('input', function() {
-    if (isGameOver) return;
-    const val = this.value.trim().toLowerCase();
-    suggestionsList.innerHTML = '';
+// --- DAILY LOGIC ---
+function updateDailyDashboard() {
+    const today = getISTDate();
+    const history = HistoryManager.getDaily(today);
+    let allComplete = true;
 
-    if (!val) {
-        suggestionsList.style.display = 'none';
-        return;
+    for (let i = 1; i <= 3; i++) {
+        const slotEl = document.getElementById(`slot-${i}`);
+        const status = history[i];
+        
+        slotEl.className = 'slot-card'; // Reset
+        slotEl.innerHTML = `<div class="slot-number">${i}</div>`;
+
+        // Logic: Slot 1 always open. Slot 2 needs Slot 1 done. Slot 3 needs Slot 2 done.
+        const prevDone = i === 1 ? true : !!history[i-1];
+        
+        if (status) {
+            slotEl.classList.add(status.won ? 'won' : 'lost');
+            slotEl.innerHTML += `<div class="slot-status">${status.won ? '✅' : '❌'}</div>`;
+            // Make clickable to review
+            slotEl.onclick = () => reviewDailyGame(today, i);
+        } else if (prevDone) {
+            slotEl.classList.add('active');
+            slotEl.innerHTML += `<div class="slot-status">▶️</div>`;
+            slotEl.onclick = () => startDailyGame(i);
+            allComplete = false;
+        } else {
+            slotEl.classList.add('locked');
+            slotEl.innerHTML += `<div class="slot-status">🔒</div>`;
+            slotEl.onclick = null;
+            allComplete = false;
+        }
     }
+    document.getElementById('daily-complete-msg').style.display = allComplete ? 'block' : 'none';
+}
 
-    // Filter using "STARTS WITH" logic
-    const matches = COUNTRIES.filter(c => c.name.toLowerCase().startsWith(val));
-
-    if (matches.length > 0) {
-        suggestionsList.style.display = 'block';
-        matches.forEach(match => {
-            const div = document.createElement('div');
-            div.className = 'suggestion-item';
-            // Bold the matching part
-            const matchName = match.name;
-            const prefix = matchName.substring(0, val.length);
-            const suffix = matchName.substring(val.length);
-            div.innerHTML = `<strong>${prefix}</strong>${suffix}`;
-            
-            div.addEventListener('click', () => {
-                inputElement.value = match.name;
-                suggestionsList.style.display = 'none';
-            });
-            suggestionsList.appendChild(div);
-        });
-    } else {
-        suggestionsList.style.display = 'none';
-    }
-});
-
-// Close dropdown when clicking outside
-document.addEventListener('click', function(e) {
-    if (e.target !== inputElement && e.target !== suggestionsList) {
-        suggestionsList.style.display = 'none';
-    }
-});
+function startCountdown() {
+    setInterval(() => {
+        const now = new Date();
+        // Calc time to next midnight IST
+        // IST is UTC+5:30. Midnight IST is 18:30 UTC previous day? No, complex.
+        // Easiest: Get current IST time, calc diff to 24:00:00
+        const nowIST = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+        const tomorrowIST = new Date(nowIST);
+        tomorrowIST.setDate(nowIST.getDate() + 1);
+        tomorrowIST.setHours(0,0,0,0);
+        
+        const diff = tomorrowIST - nowIST;
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        document.getElementById('daily-timer').textContent = `Next Daily: ${h}h ${m}m ${s}s`;
+    }, 1000);
+}
 
 // --- GAME LOGIC ---
 
+function startPracticeGame() {
+    gameState = { mode: 'practice', lives: 5, guesses: [], isOver: false, isGhost: false };
+    const randIdx = Math.floor(Math.random() * COUNTRIES.length);
+    gameState.targetIndex = randIdx;
+    setupGameUI("Practice Mode", false);
+    fetchDataForCountry(COUNTRIES[randIdx]);
+}
+
+function startDailyGame(slot) {
+    const today = getISTDate();
+    const puzzles = getDailyPuzzles(today);
+    
+    gameState = { 
+        mode: 'daily', dailySlot: slot, 
+        targetIndex: puzzles[slot-1], 
+        lives: 5, guesses: [], isOver: false, isGhost: false 
+    };
+    
+    switchTab('game'); // Force view
+    setupGameUI(`Daily Challenge #${slot}`, false);
+    fetchDataForCountry(COUNTRIES[gameState.targetIndex]);
+}
+
+function reviewDailyGame(date, slot) {
+    const history = HistoryManager.getDaily(date);
+    const record = history[slot];
+    if (!record) return;
+
+    // Show modal if lost
+    if (!record.won) {
+        selectedReviewGame = { date, slot, record };
+        document.getElementById('review-modal').style.display = 'flex';
+        document.getElementById('modal-title').textContent = `Daily #${slot} (${date})`;
+    } else {
+        loadReviewMode(record);
+    }
+}
+
+let selectedReviewGame = null;
+
+function confirmRetry() {
+    closeModal();
+    // Ghost Mode
+    gameState = {
+        mode: 'daily', dailySlot: selectedReviewGame.slot,
+        targetIndex: selectedReviewGame.record.target,
+        lives: 5, guesses: [], isOver: false, isGhost: true
+    };
+    switchTab('game');
+    setupGameUI(`Daily #${selectedReviewGame.slot} (Practice)`, false);
+    fetchDataForCountry(COUNTRIES[gameState.targetIndex]);
+}
+
+function confirmView() {
+    closeModal();
+    loadReviewMode(selectedReviewGame.record);
+}
+
+function closeModal() {
+    document.getElementById('review-modal').style.display = 'none';
+}
+
+function loadReviewMode(record) {
+    gameState = { mode: 'review', targetIndex: record.target, guesses: record.guesses, isOver: true };
+    switchTab('game');
+    setupGameUI("Review Mode", true);
+    fetchDataForCountry(COUNTRIES[record.target]);
+    
+    // Fill history
+    const container = document.getElementById('guess-history');
+    container.innerHTML = '';
+    record.guesses.forEach(gIdx => addGuessToUI(gIdx));
+
+    // Show End State
+    const targetName = COUNTRIES[record.target].name;
+    const msg = document.getElementById('message-area');
+    msg.textContent = `Answer: ${targetName}`;
+    msg.className = record.won ? 'win-msg' : 'lose-msg';
+}
+
+function setupGameUI(title, readOnly) {
+    document.getElementById('game-mode-label').textContent = title;
+    document.getElementById('lives-display').textContent = "❤️".repeat(gameState.lives);
+    document.getElementById('message-area').textContent = "";
+    document.getElementById('guess-input').value = "";
+    document.getElementById('guess-input').disabled = readOnly;
+    document.getElementById('guess-btn').style.display = readOnly ? 'none' : 'inline-block';
+    document.getElementById('play-again-btn').style.display = 'none';
+    document.getElementById('guess-history').innerHTML = "";
+    document.getElementById('game-content').style.display = 'none';
+    document.getElementById('loader').style.display = 'block';
+    document.getElementById('back-btn').style.display = 'inline-block';
+}
+
+// --- CORE GAMEPLAY ---
+
 document.getElementById('guess-btn').addEventListener('click', handleGuess);
-document.getElementById('play-again-btn').addEventListener('click', initGame);
-inputElement.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        suggestionsList.style.display = 'none';
-        handleGuess();
+document.getElementById('play-again-btn').addEventListener('click', () => {
+    if (gameState.mode === 'daily') {
+        // Go back to daily dashboard
+        switchTab('daily');
+    } else {
+        startPracticeGame();
     }
 });
 
 function handleGuess() {
-    if (isGameOver) return;
-    const val = inputElement.value.trim();
+    if (gameState.isOver) return;
+    const input = document.getElementById('guess-input');
+    const val = input.value.trim();
     if (!val) return;
 
-    const validCountry = COUNTRIES.find(c => c.name.toLowerCase() === val.toLowerCase());
-    if (!validCountry) {
-        alert("Please select a valid country from the list.");
-        return;
-    }
+    const guessIdx = COUNTRIES.findIndex(c => c.name.toLowerCase() === val.toLowerCase());
+    if (guessIdx === -1) { alert("Unknown country"); return; }
+    if (gameState.guesses.includes(guessIdx)) { alert("Already guessed"); return; }
 
-    if (val.toLowerCase() === targetCountry.name.toLowerCase()) {
+    gameState.guesses.push(guessIdx);
+    addGuessToUI(guessIdx);
+    input.value = "";
+    document.getElementById('suggestions-list').style.display = 'none';
+
+    if (guessIdx === gameState.targetIndex) {
         endGame(true);
     } else {
-        lives--;
-        updateStatus(val);
-        inputElement.value = "";
-        if (lives <= 0) endGame(false);
+        gameState.lives--;
+        document.getElementById('lives-display').textContent = "❤️".repeat(gameState.lives);
+        if (gameState.lives <= 0) endGame(false);
     }
 }
 
-function updateStatus(guessedName) {
-    document.getElementById('lives-count').textContent = "❤️".repeat(lives);
+function addGuessToUI(guessIdx) {
+    const targetId = COUNTRIES[gameState.targetIndex].id;
+    const guessId = COUNTRIES[guessIdx].id;
+    const guessName = COUNTRIES[guessIdx].name;
 
-    const historyContainer = document.getElementById('guess-history');
-    const row = document.createElement('div');
-    row.className = 'history-row';
-
-    const guessKey = guessedName.toLowerCase();
-    const targetKey = targetCountry.name.toLowerCase();
-
-    let distText = "N/A";
-    let arrowText = "";
-
-    if (DISTANCES[guessKey] && DISTANCES[guessKey][targetKey] !== undefined) {
-        const distVal = DISTANCES[guessKey][targetKey];
-        distText = Math.round(distVal).toLocaleString() + " km";
+    let distText = "N/A", arrowText = "";
+    
+    if (DISTANCES[guessId] && DISTANCES[guessId][targetId] !== undefined) {
+        distText = Math.round(DISTANCES[guessId][targetId]).toLocaleString() + " km";
     }
-
-    if (DIRECTIONS[guessKey] && DIRECTIONS[guessKey][targetKey]) {
-        const rawDir = DIRECTIONS[guessKey][targetKey];
+    if (DIRECTIONS[guessId] && DIRECTIONS[guessId][targetId]) {
+        const rawDir = DIRECTIONS[guessId][targetId];
         const correctDir = REVERSE_COMPASS[rawDir] || rawDir;
         arrowText = ARROW_MAP[correctDir] || "";
     }
 
+    const row = document.createElement('div');
+    row.className = 'history-item';
     row.innerHTML = `
-        <span class="history-name">${guessedName}</span>
-        <span class="history-dist">${distText}</span>
-        <span class="history-dir">${arrowText}</span>
+        <strong>${guessName}</strong>
+        <span>${distText}</span>
+        <span>${arrowText}</span>
     `;
-
-    // CHANGED TO PREPEND (Newest on Top)
-    historyContainer.prepend(row);
+    document.getElementById('guess-history').prepend(row);
 }
 
-function endGame(win) {
-    isGameOver = true;
-    const msgArea = document.getElementById('message-area');
-    const title = document.getElementById('game-title');
+function endGame(won) {
+    gameState.isOver = true;
+    const targetName = COUNTRIES[gameState.targetIndex].name;
+    const msg = document.getElementById('message-area');
     
-    inputElement.disabled = true;
-    document.getElementById('suggestions-list').style.display = 'none'; // Ensure closed
-    document.getElementById('guess-btn').style.display = "none";
-    document.getElementById('play-again-btn').style.display = "inline-block";
+    msg.textContent = won ? "You Won!" : `Game Over! It was ${targetName}`;
+    msg.className = won ? 'win-msg' : 'lose-msg';
 
-    if (win) {
-        msgArea.textContent = "You Won!";
-        msgArea.className = "win";
-        title.textContent = targetCountry.name;
-        title.style.color = "#27ae60";
-    } else {
-        msgArea.textContent = "Game Over! Answer: " + targetCountry.name;
-        msgArea.className = "lose";
-        title.textContent = targetCountry.name;
-        title.style.color = "#c0392b";
+    document.getElementById('guess-input').disabled = true;
+    document.getElementById('guess-btn').style.display = 'none';
+    document.getElementById('play-again-btn').style.display = 'inline-block';
+
+    // SAVE RESULT
+    if (gameState.mode === 'daily' && !gameState.isGhost) {
+        const today = getISTDate();
+        HistoryManager.saveDailyResult(today, gameState.dailySlot, {
+            won: won,
+            target: gameState.targetIndex,
+            guesses: gameState.guesses
+        });
     }
 }
 
+// --- HISTORY RENDERER ---
+function renderHistory() {
+    const list = document.getElementById('history-list');
+    list.innerHTML = '';
+    const data = HistoryManager.get().games;
+    
+    // Sort dates desc
+    const dates = Object.keys(data).sort().reverse();
+    
+    dates.forEach(date => {
+        const dayData = data[date];
+        [1, 2, 3].forEach(slot => {
+            const game = dayData[slot];
+            if (!game) return;
+
+            const tr = document.createElement('tr');
+            tr.className = 'history-row';
+            
+            // Logic for reveal button
+            let ansCell = '';
+            if (game.won) {
+                ansCell = `<strong>${COUNTRIES[game.target].name}</strong>`;
+            } else {
+                ansCell = `<button class="reveal-btn" onmousedown="reveal(this, '${COUNTRIES[game.target].name}')" onmouseup="hide(this)" ontouchstart="reveal(this, '${COUNTRIES[game.target].name}')" ontouchend="hide(this)">HOLD TO REVEAL</button>`;
+            }
+
+            tr.innerHTML = `
+                <td>${date}</td>
+                <td>#${slot}</td>
+                <td class="status-icon">${game.won ? '✅' : '❌'}</td>
+                <td>${ansCell}</td>
+            `;
+
+            // Click to review (ignore if clicking button)
+            tr.onclick = (e) => {
+                if(e.target.tagName !== 'BUTTON') {
+                    // Open review
+                     selectedReviewGame = { date, slot, record: game };
+                     if(!game.won) document.getElementById('review-modal').style.display = 'flex';
+                     else loadReviewMode(game);
+                }
+            };
+            list.appendChild(tr);
+        });
+    });
+    
+    if (list.innerHTML === '') list.innerHTML = '<tr><td colspan="4" style="text-align:center;">No history yet. Play Daily Challenge!</td></tr>';
+}
+
+// Button helpers
+window.reveal = (btn, ans) => { btn.textContent = ans; btn.style.background = '#2c3e50'; };
+window.hide = (btn) => { btn.textContent = 'HOLD TO REVEAL'; btn.style.background = '#95a5a6'; };
+
+
+// --- CHART & DATA FETCHING (Same as original, slightly cleaned) ---
 async function fetchDataForCountry(country) {
     try {
         const hs2Url = `${API_BASE}?cube=${CUBE}&drilldowns=HS2,Exporter+Country&measures=Trade+Value&include=Exporter+Country:${country.id}&time=Year.latest`;
-        const hs2Res = await fetch(hs2Url);
-        const hs2Data = (await hs2Res.json()).data;
-
         const hs4Url = `${API_BASE}?cube=${CUBE}&drilldowns=HS4,Exporter+Country&measures=Trade+Value&include=Exporter+Country:${country.id}&time=Year.latest&limit=10000`;
-        const hs4Res = await fetch(hs4Url);
+        
+        const [hs2Res, hs4Res] = await Promise.all([fetch(hs2Url), fetch(hs4Url)]);
+        const hs2Data = (await hs2Res.json()).data;
         const hs4Data = (await hs4Res.json()).data;
 
         processData(hs2Data, hs4Data);
         document.getElementById('loader').style.display = 'none';
-        document.getElementById('game-area').style.display = 'block';
+        document.getElementById('game-content').style.display = 'block';
     } catch (err) {
-        document.getElementById('loader').innerHTML = `Error: ${err.message}. <br><button onclick="initGame()">Try Another Country</button>`;
+        document.getElementById('loader').innerHTML = `Error fetching data. <button onclick="exitGame()">Go Back</button>`;
     }
 }
 
 function processData(hs2Data, hs4Data) {
     const globalTotal = hs4Data.reduce((sum, item) => sum + item["Trade Value"], 0);
-
     const billions = (globalTotal / 1000000000).toFixed(2);
     document.getElementById('total-export-display').textContent = `Total Exports: $${billions} B`;
 
-    const threshold = globalTotal * 0.002;
     const sectionStats = SECTION_MAPPING.map(s => ({ ...s, value: 0, items: [] }));
+    const threshold = globalTotal * 0.002;
 
     hs2Data.forEach(item => {
-        const idStr = item["HS2 ID"].toString();
-        let chapter = parseInt(idStr.slice(-2));
-        const section = sectionStats.find(s => s.chapters.includes(chapter));
-        if (section) section.value += item["Trade Value"];
+        const ch = parseInt(item["HS2 ID"].toString().slice(-2));
+        const s = sectionStats.find(sec => sec.chapters.includes(ch));
+        if (s) s.value += item["Trade Value"];
     });
 
     hs4Data.forEach(item => {
-        const idStr = item["HS4 ID"].toString();
-        const paddedId = idStr.padStart(4, '0');
-        const hs4Code = paddedId.slice(-4);
-        const chapter = parseInt(hs4Code.substring(0, 2));
-        const section = sectionStats.find(s => s.chapters.includes(chapter));
-        if (section) {
-            section.items.push({ code: item["HS4 ID"], name: item["HS4"], value: item["Trade Value"] });
-        }
+        const ch = parseInt(item["HS4 ID"].toString().padStart(4,'0').slice(-4).substring(0, 2));
+        const s = sectionStats.find(sec => sec.chapters.includes(ch));
+        if (s) s.items.push({ code: item["HS4 ID"], name: item["HS4"], value: item["Trade Value"] });
     });
 
     const finalTreeData = [];
@@ -665,233 +778,158 @@ function processData(hs2Data, hs4Data) {
             if (i.value >= threshold) mainItems.push(i);
             else otherVal += i.value;
         });
-        const hs4Sum = s.items.reduce((acc, i) => acc + i.value, 0);
-        const discrepancy = s.value - hs4Sum;
+        const discrepancy = s.value - s.items.reduce((acc, i) => acc + i.value, 0);
         if (discrepancy > 0) otherVal += discrepancy;
         if (otherVal > 0) mainItems.push({ code: "OTH", name: "Other " + s.name, value: otherVal, isOther: true });
-
         finalTreeData.push({ id: s.id, name: s.name, value: s.value, color: s.color, children: mainItems });
     });
 
     generateChart(finalTreeData, globalTotal);
 }
 
-// --- TREEMAP LAYOUT ENGINE ---
+// --- TREEMAP LAYOUT (Squarified) ---
 class TreemapLayout {
-    constructor(width, height) {
-        this.width = width;
-        this.height = height;
-    }
+    constructor(w, h) { this.w = w; this.h = h; }
     calculate(data) {
-        const sortedData = [...data].sort((a, b) => b.value - a.value);
-        const totalValue = sortedData.reduce((sum, item) => sum + item.value, 0);
-        const totalArea = this.width * this.height;
-        const itemsWithArea = sortedData.map(item => ({
-            ...item,
-            area: (item.value / totalValue) * totalArea
-        }));
-        return this.squarify(itemsWithArea, [], { x: 0, y: 0, w: this.width, h: this.height });
+        const sorted = [...data].sort((a, b) => b.value - a.value);
+        const total = sorted.reduce((s, i) => s + i.value, 0);
+        const area = this.w * this.h;
+        const items = sorted.map(i => ({ ...i, area: (i.value / total) * area }));
+        return this.squarify(items, [], { x: 0, y: 0, w: this.w, h: this.h });
     }
     squarify(children, row, container) {
-        if (children.length === 0) return this.layoutRow(row, container);
-        const shortestSide = Math.min(container.w, container.h);
+        if (!children.length) return this.layoutRow(row, container);
+        const side = Math.min(container.w, container.h);
         const c = children[0];
-        if (this.worstRatio(row, shortestSide) >= this.worstRatio([...row, c], shortestSide)) {
-            return this.squarify(children.slice(1), [...row, c], container);
-        } else {
-            const laidOut = this.layoutRow(row, container);
-            const rowArea = row.reduce((sum, x) => sum + x.area, 0);
-            const thickness = rowArea / shortestSide;
-            let newContainer;
-            if (container.w >= container.h) {
-                newContainer = { x: container.x + thickness, y: container.y, w: container.w - thickness, h: container.h };
-            } else {
-                newContainer = { x: container.x, y: container.y + thickness, w: container.w, h: container.h - thickness };
-            }
-            return [...laidOut, ...this.squarify(children, [], newContainer)];
+        if (this.worst(row, side) >= this.worst([...row, c], side)) return this.squarify(children.slice(1), [...row, c], container);
+        else {
+            const laid = this.layoutRow(row, container);
+            const rArea = row.reduce((s, x) => s + x.area, 0);
+            const thick = rArea / side;
+            const newCont = container.w >= container.h ? 
+                { x: container.x + thick, y: container.y, w: container.w - thick, h: container.h } : 
+                { x: container.x, y: container.y + thick, w: container.w, h: container.h - thick };
+            return [...laid, ...this.squarify(children, [], newCont)];
         }
     }
-    worstRatio(row, width) {
+    worst(row, w) {
         if (!row.length) return Number.MAX_VALUE;
-        const totalArea = row.reduce((sum, c) => sum + c.area, 0);
-        const minArea = row[row.length - 1].area;
-        const maxArea = row[0].area;
-        const s = totalArea;
-        const w = width;
-        return Math.max((w * w * maxArea) / (s * s), (s * s) / (w * w * minArea));
+        const s = row.reduce((sum, c) => sum + c.area, 0);
+        const min = row[row.length - 1].area;
+        const max = row[0].area;
+        return Math.max((w*w*max)/(s*s), (s*s)/(w*w*min));
     }
     layoutRow(row, container) {
-        if (!row.length) return [];
-        const totalArea = row.reduce((sum, c) => sum + c.area, 0);
-        const shortestSide = Math.min(container.w, container.h);
-        const thickness = totalArea / shortestSide;
-        let currentOffset = 0;
-        const result = [];
-        row.forEach(item => {
-            let itemW, itemH, itemX, itemY;
+        const s = row.reduce((sum, c) => sum + c.area, 0);
+        const side = Math.min(container.w, container.h);
+        const thick = s / side;
+        let offset = 0;
+        return row.map(item => {
+            let res;
             if (container.w >= container.h) {
-                itemW = thickness;
-                itemH = item.area / itemW;
-                itemX = container.x;
-                itemY = container.y + currentOffset;
-                currentOffset += itemH;
+                res = { ...item, x: container.x, y: container.y + offset, w: thick, h: item.area / thick };
+                offset += res.h;
             } else {
-                itemH = thickness;
-                itemW = item.area / itemH;
-                itemX = container.x + currentOffset;
-                itemY = container.y;
-                currentOffset += itemW;
+                res = { ...item, x: container.x + offset, y: container.y, w: item.area / thick, h: thick };
+                offset += res.w;
             }
-            result.push({ ...item, x: itemX, y: itemY, w: itemW, h: itemH });
+            return res;
         });
-        return result;
     }
 }
 
-function generateChart(data, globalTotal) {
+function generateChart(data, total) {
     const svg = document.getElementById('treemap-svg');
     const legend = document.getElementById('legend');
-    svg.innerHTML = '';
-    legend.innerHTML = '';
+    svg.innerHTML = ''; legend.innerHTML = '';
+    
+    const isMobile = window.innerWidth < 600;
+    const w = 1000, h = isMobile ? 1000 : 500;
+    svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
 
-    // --- RESPONSIVE LOGIC ---
-    const isMobile = window.innerWidth < 768;
-    const width = 1000;
-    const height = isMobile ? 1200 : 500;
-    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    const layout = new TreemapLayout(w, h).calculate(data);
 
-    const layoutEngine = new TreemapLayout(width, height);
-    const sectionLayout = layoutEngine.calculate(data);
+    layout.forEach(sec => {
+        const leg = document.createElement('div');
+        leg.className = 'legend-item'; leg.style.background = sec.color; leg.title = sec.name;
+        legend.appendChild(leg);
 
-    sectionLayout.forEach(sectionRect => {
-        // Legend Item
-        const legItem = document.createElement('div');
-        legItem.className = 'legend-item';
-        legItem.style.backgroundColor = sectionRect.color;
-
-        legItem.onmouseenter = (e) => {
-            document.querySelectorAll('.section-group').forEach(g => g.style.opacity = '0.1');
-            document.getElementById(`group-${sectionRect.id}`).style.opacity = '1';
-            showTooltip(e, { name: sectionRect.name, value: sectionRect.value }, globalTotal, "Section Group");
-        };
-        legItem.onmousemove = (e) => showTooltip(e, { name: sectionRect.name, value: sectionRect.value }, globalTotal, "Section Group");
-        legItem.onmouseleave = () => {
-            document.querySelectorAll('.section-group').forEach(g => g.style.opacity = '1');
-            hideTooltip();
-        };
-        legend.appendChild(legItem);
-
-        // Children Layout
-        const subEngine = new TreemapLayout(sectionRect.w, sectionRect.h);
-        const childrenLayout = subEngine.calculate(sectionRect.children);
-
+        const subLayout = new TreemapLayout(sec.w, sec.h).calculate(sec.children);
         const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-        g.setAttribute("class", "section-group");
-        g.setAttribute("id", `group-${sectionRect.id}`);
-        g.setAttribute("transform", `translate(${sectionRect.x}, ${sectionRect.y})`);
+        g.setAttribute("transform", `translate(${sec.x}, ${sec.y})`);
 
-        childrenLayout.forEach(child => {
-            const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-            rect.setAttribute("x", child.x);
-            rect.setAttribute("y", child.y);
-            rect.setAttribute("width", child.w);
-            rect.setAttribute("height", child.h);
-            rect.setAttribute("fill", sectionRect.color);
-            rect.setAttribute("fill-opacity", child.isOther ? "0.6" : "1");
-            rect.setAttribute("class", "node-rect");
+        subLayout.forEach(child => {
+            const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            r.setAttribute("x", child.x); r.setAttribute("y", child.y);
+            r.setAttribute("width", child.w); r.setAttribute("height", child.h);
+            r.setAttribute("fill", sec.color); r.setAttribute("class", "node-rect");
+            if (child.isOther) r.setAttribute("fill-opacity", "0.6");
 
-            const handleInteraction = (e) => showTooltip(e, child, globalTotal, sectionRect.name);
-            rect.addEventListener('mousemove', handleInteraction);
-            rect.addEventListener('click', handleInteraction);
-            rect.addEventListener('mouseleave', hideTooltip);
-            g.appendChild(rect);
+            r.onmousemove = (e) => showTooltip(e, child, total, sec.name);
+            r.onmouseleave = () => document.getElementById('tooltip').style.display = 'none';
+            r.onclick = (e) => showTooltip(e, child, total, sec.name);
+            g.appendChild(r);
 
-            // --- TEXT RENDERING WITH TIERS ---
-
-            // Tier 1: Too small for anything
-            if (child.w < 35 || child.h < 25) return;
-
-            // Font Size Logic
-            let fontSize = Math.min(14, child.w / 6, child.h / 2.5);
-            if (fontSize < 10) return;
-
-            // Truncation
-            const charCapacity = Math.floor((child.w - 4) / (fontSize * 0.6));
-            let displayName = child.name;
-            if (displayName.length > charCapacity) {
-                displayName = displayName.substring(0, charCapacity - 1) + "..";
+            if (child.w > 30 && child.h > 20) {
+                const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                txt.setAttribute("x", child.x + child.w/2); txt.setAttribute("y", child.y + child.h/2);
+                txt.setAttribute("text-anchor", "middle"); txt.setAttribute("dominant-baseline", "middle");
+                
+                let name = child.name;
+                const cap = Math.floor(child.w / 7);
+                if (name.length > cap) name = name.substring(0, cap) + "..";
+                
+                const tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+                tspan.textContent = name; tspan.setAttribute("class", "node-text");
+                tspan.setAttribute("font-size", Math.min(14, child.w/5));
+                txt.appendChild(tspan);
+                g.appendChild(txt);
             }
-
-            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            text.setAttribute("x", child.x + child.w / 2);
-            text.setAttribute("y", child.y + child.h / 2);
-            text.setAttribute("text-anchor", "middle");
-            text.setAttribute("dominant-baseline", "middle");
-
-            // Tier 2 vs Tier 3: Height Check for Percentage
-            const showPercent = child.h > 45;
-
-            const nameNode = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
-            nameNode.setAttribute("x", child.x + child.w / 2);
-            nameNode.setAttribute("dy", showPercent ? "-0.3em" : "0.1em");
-            nameNode.setAttribute("font-size", fontSize);
-            nameNode.setAttribute("class", "node-text");
-            nameNode.textContent = displayName;
-            text.appendChild(nameNode);
-
-            if (showPercent) {
-                const percent = ((child.value / globalTotal) * 100).toFixed(1) + "%";
-                const pctNode = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
-                pctNode.setAttribute("x", child.x + child.w / 2);
-                pctNode.setAttribute("dy", "1.2em");
-                pctNode.setAttribute("font-size", fontSize * 0.85);
-                pctNode.setAttribute("class", "node-percent");
-                pctNode.textContent = percent;
-                text.appendChild(pctNode);
-            }
-
-            g.appendChild(text);
         });
         svg.appendChild(g);
     });
 }
 
-function showTooltip(e, data, total, sectionName) {
+function showTooltip(e, d, t, s) {
     const tt = document.getElementById('tooltip');
-    const pct = ((data.value / total) * 100).toFixed(2);
-
-    let valStr;
-    if (data.value >= 1e9) valStr = "$" + (data.value / 1e9).toFixed(2) + " B";
-    else valStr = "$" + (data.value / 1e6).toFixed(0) + " M";
-
-    tt.innerHTML = `
-        <div class="sub">${sectionName}</div>
-        <strong>${data.name}</strong>
-        <div>${valStr}</div>
-        <div style="margin-top:4px; font-weight:bold; color:#ffd700;">${pct}% of Total</div>
-    `;
+    const pct = ((d.value/t)*100).toFixed(2);
+    const val = d.value > 1e9 ? `$${(d.value/1e9).toFixed(2)} B` : `$${(d.value/1e6).toFixed(0)} M`;
+    tt.innerHTML = `<small>${s}</small><br><strong>${d.name}</strong><br>${val}<br><span style="color:#ffd700">${pct}%</span>`;
     tt.style.display = 'block';
-
-    if (window.innerWidth < 768) {
-        tt.classList.add('mobile-fixed');
-        tt.style.left = '';
-        tt.style.top = '';
+    
+    if (window.innerWidth < 600) {
+        tt.style.left = '50%'; tt.style.top = 'auto'; tt.style.bottom = '20px'; tt.style.transform = 'translateX(-50%)';
     } else {
-        tt.classList.remove('mobile-fixed');
-        const x = e.clientX;
-        const y = e.clientY;
-        let left = x + 15;
-        let top = y + 15;
-        if (left + 220 > window.innerWidth) left = x - 230;
-        if (top + 100 > window.innerHeight) top = y - 110;
-        tt.style.left = left + 'px';
-        tt.style.top = top + 'px';
+        tt.style.transform = 'none';
+        let x = e.clientX + 15, y = e.clientY + 15;
+        if (x + 200 > window.innerWidth) x -= 210;
+        tt.style.left = x + 'px'; tt.style.top = y + 'px';
     }
 }
 
-function hideTooltip() {
-    document.getElementById('tooltip').style.display = 'none';
-}
+// --- DROPDOWN ---
+const inp = document.getElementById('guess-input');
+const sugg = document.getElementById('suggestions-list');
+inp.addEventListener('input', function() {
+    const val = this.value.toLowerCase();
+    sugg.innerHTML = '';
+    if (!val) { sugg.style.display = 'none'; return; }
+    const matches = COUNTRIES.filter(c => c.name.toLowerCase().startsWith(val));
+    if (matches.length) {
+        sugg.style.display = 'block';
+        matches.forEach(c => {
+            const d = document.createElement('div'); d.className = 'suggestion-item';
+            d.innerHTML = `<strong>${c.name.substr(0, val.length)}</strong>${c.name.substr(val.length)}`;
+            d.onclick = () => { inp.value = c.name; sugg.style.display = 'none'; };
+            sugg.appendChild(d);
+        });
+    } else sugg.style.display = 'none';
+});
+document.addEventListener('click', e => { if (e.target !== inp && e.target !== sugg) sugg.style.display = 'none'; });
+
+// Start
+startApp();
+
 </script>
 </body>
 </html>
