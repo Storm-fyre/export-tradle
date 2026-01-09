@@ -726,20 +726,37 @@ function addGuessToUI(guessCountry, targetCountry) {
     const row = document.createElement('div');
     row.className = 'history-row';
     
-    // FIX: Use lowercase names for lookup
     const guessKey = guessCountry.name.toLowerCase();
     const targetKey = targetCountry.name.toLowerCase();
     
+    // Check if this guess is the correct answer
+    const isWinner = guessKey === targetKey;
+
     let distText = "N/A", arrowText = "";
 
-    if (DISTANCES[guessKey] && DISTANCES[guessKey][targetKey] !== undefined) {
-        distText = Math.round(DISTANCES[guessKey][targetKey]).toLocaleString() + " km";
-    }
+    if (isWinner) {
+        // --- CHANGES START HERE ---
+        
+        // 1. Light green background for the winning entity
+        row.style.backgroundColor = "#eafaf1"; 
+        row.style.borderColor = "#27ae60"; // (Optional) Adds a green border
+        
+        // 2. No distance and No direction
+        distText = ""; 
+        arrowText = "🎉"; // (Optional) Shows a party popper, or leave as "" for completely blank
+        
+        // --- CHANGES END HERE ---
+    } else {
+        // Standard logic for incorrect guesses
+        if (DISTANCES[guessKey] && DISTANCES[guessKey][targetKey] !== undefined) {
+            distText = Math.round(DISTANCES[guessKey][targetKey]).toLocaleString() + " km";
+        }
 
-    if (DIRECTIONS[guessKey] && DIRECTIONS[guessKey][targetKey]) {
-        const rawDir = DIRECTIONS[guessKey][targetKey];
-        const correctDir = REVERSE_COMPASS[rawDir] || rawDir;
-        arrowText = ARROW_MAP[correctDir] || "";
+        if (DIRECTIONS[guessKey] && DIRECTIONS[guessKey][targetKey]) {
+            const rawDir = DIRECTIONS[guessKey][targetKey];
+            const correctDir = REVERSE_COMPASS[rawDir] || rawDir;
+            arrowText = ARROW_MAP[correctDir] || "";
+        }
     }
 
     row.innerHTML = `<span class="history-name">${guessCountry.name}</span><span class="history-dist">${distText}</span><span class="history-dir">${arrowText}</span>`;
