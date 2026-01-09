@@ -6,7 +6,7 @@
     <title>Export Tradle</title>
     <style>
         /* --- CSS STYLES (Includes Mobile & Font Fixes) --- */
-        
+
         /* Reset & Base */
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f7f9; margin: 0; padding: 1rem; color: #333; }
         .container { max-width: 1100px; margin: 0 auto; background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
@@ -23,7 +23,7 @@
             border-radius: 8px; border: 1px solid #e1e4e8; font-size: 1.1rem; gap: 10px;
         }
         .total-export { font-weight: bold; color: #2c3e50; }
-        
+
         /* Legend */
         #legend { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 15px; min-height: 20px; }
         .legend-item { width: 18px; height: 18px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.1); cursor: pointer; }
@@ -55,19 +55,19 @@
         .section-group { transition: opacity 0.2s; }
         .node-rect { stroke: #fff; stroke-width: 1px; transition: fill-opacity 0.1s; cursor: pointer; }
         .node-rect:hover { fill-opacity: 0.85; }
-        
-        .node-text { 
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
-            fill: white; 
-            pointer-events: none; 
+
+        .node-text {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            fill: white;
+            pointer-events: none;
             /* Stronger shadow for readability on light colors */
-            text-shadow: 0 0 3px rgba(0,0,0,0.8), 0 1px 2px rgba(0,0,0,1); 
-            font-weight: 500; 
+            text-shadow: 0 0 3px rgba(0,0,0,0.8), 0 1px 2px rgba(0,0,0,1);
+            font-weight: 500;
         }
-        .node-percent { 
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
-            fill: rgba(255,255,255,0.95); 
-            pointer-events: none; 
+        .node-percent {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            fill: rgba(255,255,255,0.95);
+            pointer-events: none;
             font-weight: 400;
             text-shadow: 0 0 3px rgba(0,0,0,0.8);
         }
@@ -88,7 +88,7 @@
             .controls { flex-direction: column; }
             input { width: 100%; box-sizing: border-box; }
             button { width: 100%; padding: 15px; }
-            
+
             #tooltip.mobile-fixed {
                 top: auto !important; bottom: 20px !important; left: 50% !important;
                 transform: translateX(-50%); width: 90%; max-width: none; text-align: center;
@@ -166,29 +166,201 @@ const SECTION_MAPPING = [
 ];
 
 const COUNTRIES = [
-    { "name": "Afghanistan", "id": "asafg" }, { "name": "Albania", "id": "eualb" }, { "name": "Algeria", "id": "afdza" },
-    { "name": "Angola", "id": "afago" }, { "name": "Argentina", "id": "saarg" }, { "name": "Australia", "id": "ocaus" },
-    { "name": "Austria", "id": "euaut" }, { "name": "Bangladesh", "id": "asbgd" }, { "name": "Belgium", "id": "eubel" },
-    { "name": "Brazil", "id": "sabra" }, { "name": "Canada", "id": "nacan" }, { "name": "Chile", "id": "sachl" },
-    { "name": "China", "id": "aschn" }, { "name": "Colombia", "id": "sacol" }, { "name": "Congo (Dem. Rep.)", "id": "afcod" },
-    { "name": "Costa Rica", "id": "nacri" }, { "name": "Croatia", "id": "euhrv" }, { "name": "Czech Republic", "id": "eucze" },
-    { "name": "Denmark", "id": "eudnk" }, { "name": "Egypt", "id": "afegy" }, { "name": "Finland", "id": "eufin" },
-    { "name": "France", "id": "eufra" }, { "name": "Germany", "id": "eudeu" }, { "name": "Greece", "id": "eugrc" },
-    { "name": "Hong Kong", "id": "ashkg" }, { "name": "Hungary", "id": "euhun" }, { "name": "India", "id": "asind" },
-    { "name": "Indonesia", "id": "asidn" }, { "name": "Iran", "id": "asirn" }, { "name": "Iraq", "id": "asirq" },
-    { "name": "Ireland", "id": "euirl" }, { "name": "Israel", "id": "asisr" }, { "name": "Italy", "id": "euita" },
-    { "name": "Japan", "id": "asjpn" }, { "name": "Kazakhstan", "id": "askaz" }, { "name": "Kenya", "id": "afken" },
-    { "name": "Kuwait", "id": "askwt" }, { "name": "Malaysia", "id": "asmys" }, { "name": "Mexico", "id": "namex" },
-    { "name": "Morocco", "id": "afmar" }, { "name": "Netherlands", "id": "eunld" }, { "name": "New Zealand", "id": "ocnzl" },
-    { "name": "Nigeria", "id": "afnga" }, { "name": "Norway", "id": "eunor" }, { "name": "Pakistan", "id": "aspak" },
-    { "name": "Peru", "id": "saper" }, { "name": "Philippines", "id": "asphl" }, { "name": "Poland", "id": "eupol" },
-    { "name": "Portugal", "id": "euprt" }, { "name": "Qatar", "id": "asqat" }, { "name": "Romania", "id": "eurou" },
-    { "name": "Russia", "id": "eurus" }, { "name": "Saudi Arabia", "id": "assau" }, { "name": "Singapore", "id": "assgp" },
-    { "name": "South Africa", "id": "afzaf" }, { "name": "South Korea", "id": "askor" }, { "name": "Spain", "id": "euesp" },
-    { "name": "Sweden", "id": "euswe" }, { "name": "Switzerland", "id": "euche" }, { "name": "Taiwan", "id": "astwn" },
-    { "name": "Thailand", "id": "astha" }, { "name": "Turkey", "id": "astur" }, { "name": "Ukraine", "id": "euukr" },
-    { "name": "United Arab Emirates", "id": "asare" }, { "name": "United Kingdom", "id": "eugbr" },
-    { "name": "United States", "id": "nausa" }, { "name": "Vietnam", "id": "asvnm" }
+  { "name": "United States", "id": "nausa" },
+  { "name": "China", "id": "aschn" },
+  { "name": "Germany", "id": "eudeu" },
+  { "name": "Japan", "id": "asjpn" },
+  { "name": "India", "id": "asind" },
+  { "name": "United Kingdom", "id": "eugbr" },
+  { "name": "France", "id": "eufra" },
+  { "name": "Brazil", "id": "sabra" },
+  { "name": "Italy", "id": "euita" },
+  { "name": "Canada", "id": "nacan" },
+  { "name": "Russia", "id": "eurus" },
+  { "name": "Mexico", "id": "namex" },
+  { "name": "Australia", "id": "ocaus" },
+  { "name": "South Korea", "id": "askor" },
+  { "name": "Spain", "id": "euesp" },
+  { "name": "Indonesia", "id": "asidn" },
+  { "name": "Saudi Arabia", "id": "assau" },
+  { "name": "Turkey", "id": "astur" },
+  { "name": "Netherlands", "id": "eunld" },
+  { "name": "Switzerland", "id": "euche" },
+  { "name": "Poland", "id": "eupol" },
+  { "name": "Argentina", "id": "saarg" },
+  { "name": "Belgium", "id": "eubel" },
+  { "name": "Sweden", "id": "euswe" },
+  { "name": "Ireland", "id": "euirl" },
+  { "name": "Austria", "id": "euaut" },
+  { "name": "Thailand", "id": "astha" },
+  { "name": "United Arab Emirates", "id": "asare" },
+  { "name": "Singapore", "id": "assgp" },
+  { "name": "Norway", "id": "eunor" },
+  { "name": "Israel", "id": "asisr" },
+  { "name": "Vietnam", "id": "asvnm" },
+  { "name": "Philippines", "id": "asphl" },
+  { "name": "Bangladesh", "id": "asbgd" },
+  { "name": "Iran", "id": "asirn" },
+  { "name": "Malaysia", "id": "asmys" },
+  { "name": "Denmark", "id": "eudnk" },
+  { "name": "Colombia", "id": "sacol" },
+  { "name": "South Africa", "id": "afzaf" },
+  { "name": "Romania", "id": "eurou" },
+  { "name": "Egypt", "id": "afegy" },
+  { "name": "Pakistan", "id": "aspak" },
+  { "name": "Chile", "id": "sachl" },
+  { "name": "Czech Republic", "id": "eucze" },
+  { "name": "Finland", "id": "eufin" },
+  { "name": "Portugal", "id": "euprt" },
+  { "name": "Kazakhstan", "id": "askaz" },
+  { "name": "Peru", "id": "saper" },
+  { "name": "Algeria", "id": "afdza" },
+  { "name": "Iraq", "id": "asirq" },
+  { "name": "Nigeria", "id": "afnga" },
+  { "name": "Hungary", "id": "euhun" },
+  { "name": "New Zealand", "id": "ocnzl" },
+  { "name": "Greece", "id": "eugrc" },
+  { "name": "Qatar", "id": "asqat" },
+  { "name": "Kuwait", "id": "askwt" },
+  { "name": "Ukraine", "id": "euukr" },
+  { "name": "Morocco", "id": "afmar" },
+  { "name": "Ethiopia", "id": "afeth" },
+  { "name": "Slovakia", "id": "eusvk" },
+  { "name": "Ecuador", "id": "saecu" },
+  { "name": "Dominican Republic", "id": "nadom" },
+  { "name": "Sri Lanka", "id": "aslka" },
+  { "name": "Guatemala", "id": "nagtm" },
+  { "name": "Oman", "id": "asomn" },
+  { "name": "Cuba", "id": "nacub" },
+  { "name": "Bulgaria", "id": "eubgr" },
+  { "name": "Venezuela", "id": "saven" },
+  { "name": "Kenya", "id": "afken" },
+  { "name": "Uzbekistan", "id": "asuzb" },
+  { "name": "Angola", "id": "afago" },
+  { "name": "Costa Rica", "id": "nacri" },
+  { "name": "Luxembourg", "id": "eulux" },
+  { "name": "Croatia", "id": "euhrv" },
+  { "name": "Panama", "id": "napan" },
+  { "name": "Cote d'Ivoire", "id": "afciv" },
+  { "name": "Uruguay", "id": "saury" },
+  { "name": "Turkmenistan", "id": "astkm" },
+  { "name": "Serbia", "id": "eusrb" },
+  { "name": "Lithuania", "id": "eultu" },
+  { "name": "Tanzania", "id": "aftza" },
+  { "name": "Azerbaijan", "id": "asaze" },
+  { "name": "Ghana", "id": "afgha" },
+  { "name": "Slovenia", "id": "eusvn" },
+  { "name": "Belarus", "id": "eublr" },
+  { "name": "Congo (Dem. Rep.)", "id": "afcod" },
+  { "name": "Myanmar", "id": "asmmr" },
+  { "name": "Uganda", "id": "afuga" },
+  { "name": "Tunisia", "id": "aftun" },
+  { "name": "Jordan", "id": "asjor" },
+  { "name": "Cameroon", "id": "afcmr" },
+  { "name": "Bolivia", "id": "sabol" },
+  { "name": "Paraguay", "id": "sapry" },
+  { "name": "Libya", "id": "aflby" },
+  { "name": "Bahrain", "id": "asbhr" },
+  { "name": "Latvia", "id": "eulva" },
+  { "name": "Nepal", "id": "asnpl" },
+  { "name": "Estonia", "id": "euest" },
+  { "name": "North Korea", "id": "askpr" },
+  { "name": "Sudan", "id": "afsdn" },
+  { "name": "El Salvador", "id": "naslv" },
+  { "name": "Honduras", "id": "nahnd" },
+  { "name": "Papua New Guinea", "id": "ocpng" },
+  { "name": "Cyprus", "id": "eucyp" },
+  { "name": "Cambodia", "id": "askhm" },
+  { "name": "Zambia", "id": "afzmb" },
+  { "name": "Iceland", "id": "euisl" },
+  { "name": "Senegal", "id": "afsen" },
+  { "name": "Trinidad and Tobago", "id": "natto" },
+  { "name": "Zimbabwe", "id": "afzwe" },
+  { "name": "Bosnia and Herzegovina", "id": "eubih" },
+  { "name": "Georgia", "id": "asgeo" },
+  { "name": "Guinea", "id": "afgin" },
+  { "name": "Lebanon", "id": "aslbn" },
+  { "name": "Haiti", "id": "nahti" },
+  { "name": "Gabon", "id": "afgab" },
+  { "name": "Armenia", "id": "asarm" },
+  { "name": "Burkina Faso", "id": "afbfa" },
+  { "name": "Mali", "id": "afmli" },
+  { "name": "Mozambique", "id": "afmoz" },
+  { "name": "Palestine", "id": "aspse" },
+  { "name": "Albania", "id": "eualb" },
+  { "name": "Botswana", "id": "afbwa" },
+  { "name": "Malta", "id": "eumlt" },
+  { "name": "Benin", "id": "afben" },
+  { "name": "Syria", "id": "assyr" },
+  { "name": "Mongolia", "id": "asmng" },
+  { "name": "Equatorial Guinea", "id": "afgnq" },
+  { "name": "Guyana", "id": "saguy" },
+  { "name": "Madagascar", "id": "afmdg" },
+  { "name": "Nicaragua", "id": "nanic" },
+  { "name": "Niger", "id": "afner" },
+  { "name": "Jamaica", "id": "najam" },
+  { "name": "Laos", "id": "aslao" },
+  { "name": "Moldova", "id": "eumda" },
+  { "name": "Congo (Republic)", "id": "afcog" },
+  { "name": "North Macedonia", "id": "eumkd" },
+  { "name": "Rwanda", "id": "afrwa" },
+  { "name": "Namibia", "id": "afnam" },
+  { "name": "Afghanistan", "id": "asafg" },
+  { "name": "Bahamas", "id": "nabhs" },
+  { "name": "Chad", "id": "aftcd" },
+  { "name": "Malawi", "id": "afmwi" },
+  { "name": "Monaco", "id": "eumco" },
+  { "name": "Brunei", "id": "asbrn" },
+  { "name": "Mauritius", "id": "afmus" },
+  { "name": "Tajikistan", "id": "astjk" },
+  { "name": "Kyrgyzstan", "id": "askgz" },
+  { "name": "Mauritania", "id": "afmrt" },
+  { "name": "Somalia", "id": "afsom" },
+  { "name": "Togo", "id": "aftgo" },
+  { "name": "Liechtenstein", "id": "eulie" },
+  { "name": "Yemen", "id": "asyem" },
+  { "name": "Maldives", "id": "asmdv" },
+  { "name": "Barbados", "id": "nabrb" },
+  { "name": "South Sudan", "id": "afssd" },
+  { "name": "Montenegro", "id": "eumne" },
+  { "name": "Fiji", "id": "ocfji" },
+  { "name": "Eswatini", "id": "afswz" },
+  { "name": "Liberia", "id": "aflbr" },
+  { "name": "Sierra Leone", "id": "afsle" },
+  { "name": "Djibouti", "id": "afdji" },
+  { "name": "Andorra", "id": "euand" },
+  { "name": "Suriname", "id": "sasur" },
+  { "name": "Burundi", "id": "afbdi" },
+  { "name": "Timor-Leste", "id": "astls" },
+  { "name": "Bhutan", "id": "asbtn" },
+  { "name": "Central African Republic", "id": "afcaf" },
+  { "name": "Belize", "id": "nablz" },
+  { "name": "Gambia", "id": "afgmb" },
+  { "name": "Eritrea", "id": "aferi" },
+  { "name": "Saint Lucia", "id": "nalca" },
+  { "name": "Cape Verde", "id": "afcpv" },
+  { "name": "Antigua and Barbuda", "id": "naatg" },
+  { "name": "Seychelles", "id": "afsyc" },
+  { "name": "Guinea-Bissau", "id": "afgnb" },
+  { "name": "Solomon Islands", "id": "ocslb" },
+  { "name": "San Marino", "id": "eusmr" },
+  { "name": "Lesotho", "id": "aflso" },
+  { "name": "Comoros", "id": "afcom" },
+  { "name": "Saint Kitts and Nevis", "id": "nakna" },
+  { "name": "Vanuatu", "id": "ocvut" },
+  { "name": "Saint Vincent and the Grenadines", "id": "navct" },
+  { "name": "Samoa", "id": "ocwsm" },
+  { "name": "Sao Tome and Principe", "id": "afstp" },
+  { "name": "Dominica", "id": "nadma" },
+  { "name": "Grenada", "id": "nagrd" },
+  { "name": "Micronesia", "id": "ocfsm" },
+  { "name": "Tonga", "id": "octon" },
+  { "name": "Marshall Islands", "id": "ocmhl" },
+  { "name": "Palau", "id": "ocplw" },
+  { "name": "Kiribati", "id": "ockir" },
+  { "name": "Nauru", "id": "ocnru" },
+  { "name": "Tuvalu", "id": "octuv" },
+  { "name": "Vatican City", "id": "euvat" }
 ];
 
 const REVERSE_COMPASS = {
@@ -232,7 +404,7 @@ async function startApp() {
 
         initGame();
     } catch (err) {
-        document.getElementById('loader').innerHTML = 
+        document.getElementById('loader').innerHTML =
             `Error loading game files.<br>Ensure distances.json and directions.json are in the same folder.<br>${err.message}`;
     }
 }
@@ -258,7 +430,13 @@ function initGame() {
     document.getElementById('loader').textContent = "Fetching Mystery Data...";
     document.getElementById('total-export-display').textContent = "Total Exports: $--- B";
 
-    const randomIndex = Math.floor(Math.random() * COUNTRIES.length);
+    // --- UPDATED SELECTION LOGIC (Gentle Tilt - Bias 1.5) ---
+    // The COUNTRIES array is sorted from Largest (Index 0) to Smallest (Index N).
+    // Math.random() gives 0.0 to 1.0.
+    // Raising it to power 1.5 shifts the distribution towards 0 (Top Countries).
+    // Result: More likely to pick index 0-50, but index 200 is still possible.
+    const weightedRandom = Math.pow(Math.random(), 1.5);
+    const randomIndex = Math.floor(weightedRandom * COUNTRIES.length);
     targetCountry = COUNTRIES[randomIndex];
 
     fetchDataForCountry(targetCountry);
@@ -493,8 +671,8 @@ function generateChart(data, globalTotal) {
 
     // --- RESPONSIVE LOGIC ---
     const isMobile = window.innerWidth < 768;
-    const width = 1000; 
-    const height = isMobile ? 1200 : 500; 
+    const width = 1000;
+    const height = isMobile ? 1200 : 500;
     svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
 
     const layoutEngine = new TreemapLayout(width, height);
@@ -505,7 +683,7 @@ function generateChart(data, globalTotal) {
         const legItem = document.createElement('div');
         legItem.className = 'legend-item';
         legItem.style.backgroundColor = sectionRect.color;
-        
+
         legItem.onmouseenter = (e) => {
             document.querySelectorAll('.section-group').forEach(g => g.style.opacity = '0.1');
             document.getElementById(`group-${sectionRect.id}`).style.opacity = '1';
@@ -544,13 +722,13 @@ function generateChart(data, globalTotal) {
             g.appendChild(rect);
 
             // --- TEXT RENDERING WITH TIERS ---
-            
+
             // Tier 1: Too small for anything
             if (child.w < 35 || child.h < 25) return;
 
             // Font Size Logic
             let fontSize = Math.min(14, child.w / 6, child.h / 2.5);
-            if (fontSize < 10) return; 
+            if (fontSize < 10) return;
 
             // Truncation
             const charCapacity = Math.floor((child.w - 4) / (fontSize * 0.6));
@@ -570,7 +748,7 @@ function generateChart(data, globalTotal) {
 
             const nameNode = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
             nameNode.setAttribute("x", child.x + child.w / 2);
-            nameNode.setAttribute("dy", showPercent ? "-0.3em" : "0.1em"); 
+            nameNode.setAttribute("dy", showPercent ? "-0.3em" : "0.1em");
             nameNode.setAttribute("font-size", fontSize);
             nameNode.setAttribute("class", "node-text");
             nameNode.textContent = displayName;
@@ -596,7 +774,7 @@ function generateChart(data, globalTotal) {
 function showTooltip(e, data, total, sectionName) {
     const tt = document.getElementById('tooltip');
     const pct = ((data.value / total) * 100).toFixed(2);
-    
+
     let valStr;
     if (data.value >= 1e9) valStr = "$" + (data.value / 1e9).toFixed(2) + " B";
     else valStr = "$" + (data.value / 1e6).toFixed(0) + " M";
