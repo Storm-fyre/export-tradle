@@ -899,7 +899,7 @@ function processData(hs2Data, hs4Data) {
         const sec = sectionStats.find(s => s.chapters.includes(chap));
         if (sec) sec.value += item["Trade Value"];
     });
-    const threshold = globalTotal * 0.001;
+    const threshold = globalTotal * 0.0005;
     hs4Data.forEach(item => {
         const code = item["HS4 ID"].toString().padStart(4,'0').slice(-4);
         const chap = parseInt(code.substring(0, 2));
