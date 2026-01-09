@@ -594,9 +594,9 @@ function initGame(mode, targetIdx, slot = null, historicalGuesses = []) {
         if (mode === 'review' && historicalGuesses.length > 0) {
             historicalGuesses.forEach(idx => {
                 const c = COUNTRIES[idx];
-                addGuessToUI(c.name, c.id, gameState.targetCountry.id);
+                // UPDATE THIS LINE:
+                addGuessToUI(c, gameState.targetCountry);
             });
-            // Show outcome
             const won = historicalGuesses.includes(targetIdx);
             endGame(won, true); 
         }
@@ -639,13 +639,15 @@ function handleGuess() {
     const val = inputElement.value.trim();
     if (!val) return;
 
+    // 1. Find the country object based on the typed name
     const guessIdx = COUNTRIES.findIndex(c => c.name.toLowerCase() === val.toLowerCase());
     if (guessIdx === -1) { alert("Please select a valid country."); return; }
     
     const guessCountry = COUNTRIES[guessIdx];
     gameState.guesses.push(guessIdx);
     
-    addGuessToUI(guessCountry.name, guessCountry.id, gameState.targetCountry.id);
+    // 2. Pass the full objects to the UI function so we can extract names
+    addGuessToUI(guessCountry, gameState.targetCountry);
     inputElement.value = "";
 
     if (guessIdx === gameState.targetIndex) {
@@ -657,21 +659,29 @@ function handleGuess() {
     }
 }
 
-function addGuessToUI(name, guessId, targetId) {
+function addGuessToUI(guessCountry, targetCountry) {
     const row = document.createElement('div');
     row.className = 'history-row';
     
+    // FIX: Use lowercase names for lookup
+    const guessKey = guessCountry.name.toLowerCase();
+    const targetKey = targetCountry.name.toLowerCase();
+    
     let distText = "N/A", arrowText = "";
-    if (DISTANCES[guessId] && DISTANCES[guessId][targetId] !== undefined) {
-        distText = Math.round(DISTANCES[guessId][targetId]).toLocaleString() + " km";
+
+    // Check Distances using Names
+    if (DISTANCES[guessKey] && DISTANCES[guessKey][targetKey] !== undefined) {
+        distText = Math.round(DISTANCES[guessKey][targetKey]).toLocaleString() + " km";
     }
-    if (DIRECTIONS[guessId] && DIRECTIONS[guessId][targetId]) {
-        const rawDir = DIRECTIONS[guessId][targetId];
+
+    // Check Directions using Names
+    if (DIRECTIONS[guessKey] && DIRECTIONS[guessKey][targetKey]) {
+        const rawDir = DIRECTIONS[guessKey][targetKey];
         const correctDir = REVERSE_COMPASS[rawDir] || rawDir;
         arrowText = ARROW_MAP[correctDir] || "";
     }
 
-    row.innerHTML = `<span class="history-name">${name}</span><span class="history-dist">${distText}</span><span class="history-dir">${arrowText}</span>`;
+    row.innerHTML = `<span class="history-name">${guessCountry.name}</span><span class="history-dist">${distText}</span><span class="history-dir">${arrowText}</span>`;
     document.getElementById('guess-history').prepend(row);
 }
 
