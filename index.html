@@ -1050,30 +1050,25 @@ function generateChart(data, total) {
             r.onmousemove=(e)=>showTooltip(e,child,total,sec.name); r.onmouseleave=hideTooltip;
             g.appendChild(r);
 
-            // --- FIT-TO-WIDTH LOGIC ---
+            // --- FIT-TO-WIDTH LOGIC (8px Floor) ---
             if(child.w > 16 && child.h > 12) {
 
-                // 1. Geometric Max: Font size constrained by box height & general aesthetics
-                // Cap at 14px. divide height by 1.1 to leave tiny padding.
-                // We purposefully use a loose width divisor (w/3) here just to stop 1-letter words from being huge.
+                // 1. Geometric Max
                 const geoFS = Math.min(14, child.w / 3, child.h / 1.1);
 
-                // 2. Content Max: Font size constrained by the text length
-                // "How small does the font need to be for THIS word to fit in THIS width?"
-                // Multiplier 0.65 estimates average character width with padding.
+                // 2. Content Max
                 const contentFS = child.w / (child.name.length * 0.65);
 
-                // 3. The Decision: Pick the one that fits best
+                // 3. The Decision
                 let fs = Math.min(geoFS, contentFS);
 
-                // 4. Determine Truncation
-                // If the "perfect fit" font is readable (>= 6px), use it and show full text.
-                // If it's too small (< 6px), floor it at 6px and truncate the text.
+                // 4. Determine Truncation (Floor raised to 8px)
                 let displayName = child.name;
                 
-                if (fs < 6) {
-                    fs = 6; // Hard floor
-                    // Calculate how many chars fit at 6px
+                if (fs < 8) {
+                    fs = 8; // Hard floor is now 8px
+                    
+                    // Calculate how many chars fit at 8px
                     const maxChars = Math.floor(child.w / (fs * 0.6));
                     if(displayName.length > maxChars) {
                         displayName = displayName.substring(0, Math.max(0, maxChars-2)) + "..";
@@ -1087,8 +1082,7 @@ function generateChart(data, total) {
                 t.setAttribute("dominant-baseline","middle");
                 t.setAttribute("pointer-events","none");
 
-                // Show percentage only if we have vertical room and the font isn't tiny
-                // This ensures "Telephones" gets centered alone if the font shrunk to fit it.
+                // Show percentage only if vertical room exists and font is decent (>9px)
                 const showPercent = child.h > 26 && fs > 9;
 
                 const nameSpan = document.createElementNS("http://www.w3.org/2000/svg","tspan");
