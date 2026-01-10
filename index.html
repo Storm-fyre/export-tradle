@@ -1050,7 +1050,7 @@ function generateChart(data, total) {
             r.onmousemove=(e)=>showTooltip(e,child,total,sec.name); r.onmouseleave=hideTooltip;
             g.appendChild(r);
 
-            // --- TEXT LAYOUT ENGINE v4 (Capped & Tuned) ---
+            // --- TEXT LAYOUT ENGINE v5 (Dynamic & Breathable) ---
             
             if(child.w > 35 && child.h > 20) {
                 
@@ -1060,10 +1060,11 @@ function generateChart(data, total) {
                 
                 // CONSTANTS
                 const FLOOR = 10; 
-                const MAX_FONT = 30; // NEW: Cap font size to prevent "Obnoxious" text
+                const MAX_FONT = 40; // UPDATED: 40px Cap
+                const CHAR_CONST = 0.55; // UPDATED: Narrower char width estimate (0.55)
 
                 const getFontSizeForWidth = (str, availableWidth) => {
-                    return availableWidth / (str.length * 0.6);
+                    return availableWidth / (str.length * CHAR_CONST);
                 };
 
                 let rendered = false;
@@ -1077,21 +1078,16 @@ function generateChart(data, total) {
                     const fsStackW = getFontSizeForWidth(w1, boxW * 0.9);
                     const fsStackH = boxH / 3.5;
                     
-                    // Apply Cap (Math.min with MAX_FONT)
                     let fsStack = Math.min(fsStackW, fsStackH, MAX_FONT);
 
                     if (fsStack >= FLOOR) {
-                        // Determine Line 2 content
-                        const maxChars = Math.floor((boxW * 0.9) / (fsStack * 0.6));
+                        const maxChars = Math.floor((boxW * 0.9) / (fsStack * CHAR_CONST));
                         let line2Text = w2;
                         let validStack = true;
 
                         if (w2.length > maxChars) {
-                            // Truncation required
                             const avail = Math.max(0, maxChars - 2);
-                            
-                            // RULE: "T.." is fine (avail=1), but ".." is bad (avail=0)
-                            if (avail < 1) {
+                            if (avail < 1) { // ".." check
                                 validStack = false; 
                             } else {
                                 line2Text = w2.substring(0, avail) + "..";
@@ -1138,20 +1134,20 @@ function generateChart(data, total) {
                 // --- STRATEGY 2: SINGLE LINE FALLBACK ---
                 if (!rendered) {
                     const fsSingleW = getFontSizeForWidth(text, boxW * 0.9);
-                    const fsSingleH = boxH * 0.6;
                     
-                    // Apply Cap
+                    // UPDATED: Height allowance increased to 70%
+                    const fsSingleH = boxH * 0.7; 
+                    
                     let fsSingle = Math.min(fsSingleW, fsSingleH, MAX_FONT);
 
                     if (fsSingle < FLOOR) fsSingle = FLOOR;
                     
-                    const maxChars = Math.floor((boxW * 0.9) / (fsSingle * 0.6));
+                    const maxChars = Math.floor((boxW * 0.9) / (fsSingle * CHAR_CONST));
                     let finalText = "";
                     
                     if (text.length <= maxChars) {
                         finalText = text; 
                     } else {
-                        // Strict 6-char rule for single lines
                         const visibleChars = maxChars - 2;
                         if (visibleChars >= 6) {
                             finalText = text.substring(0, visibleChars) + "..";
@@ -1165,6 +1161,8 @@ function generateChart(data, total) {
                         t.setAttribute("pointer-events", "none");
                         t.setAttribute("font-size", fsSingle);
                         
+                        // UPDATED: Dynamic Percentage Logic
+                        // Only show percentage if there is truly enough height
                         const showPercent = boxH > (fsSingle * 2.2);
 
                         const tspan = document.createElementNS("http://www.w3.org/2000/svg","tspan");
@@ -1182,6 +1180,7 @@ function generateChart(data, total) {
                             pctSpan.setAttribute("dy", "1.2em");
                             t.appendChild(pctSpan);
                         } else {
+                            // Centered perfectly if no percentage (Name takes priority)
                             t.setAttribute("y", sec.y + child.y + child.h/2 + (fsSingle * 0.3));
                         }
                         g.appendChild(t);
