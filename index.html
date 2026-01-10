@@ -51,8 +51,6 @@
         table.history-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         table.history-table th { text-align: left; padding: 12px; background: #f8f9fa; border-bottom: 2px solid #e1e4e8; color: #2c3e50; }
         table.history-table td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
-        
-        /* IMPROVEMENT 1: Make history rows look clickable */
         table.history-table tbody tr { cursor: pointer; transition: background-color 0.15s ease; }
         table.history-table tbody tr:hover { background-color: #f1f2f6; }
 
@@ -60,12 +58,11 @@
         .reveal-btn {
             background: #95a5a6; color: white; padding: 6px 12px; border-radius: 4px; 
             font-size: 0.8rem; cursor: help; border: none; user-select: none; width: 120px;
-            /* Ensure button interaction doesn't feel weird inside the clickable row */
             position: relative; z-index: 2; 
         }
         .reveal-btn:active { background: #e67e22; }
         
-        /* Modal for History Action */
+        /* Modal */
         #action-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); z-index: 2000; display: none;
@@ -119,10 +116,10 @@
         button:disabled { background: #bdc3c7; cursor: not-allowed; }
         
         #back-home-btn { background: #7f8c8d; }
-        #give-up-btn { background: #e74c3c; display: none; } /* Red for Give Up */
+        #give-up-btn { background: #e74c3c; display: none; }
         #give-up-btn:hover { background: #c0392b; }
 
-        /* History List (In Game) */
+        /* History List */
         #guess-history { display: flex; flex-direction: column; gap: 8px; max-width: 600px; margin: 20px auto 0 auto; }
         .history-row { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #e1e4e8; padding: 10px 15px; border-radius: 6px; font-size: 0.95rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .history-name { font-weight: bold; color: #2c3e50; text-align: left; flex: 1; }
@@ -177,7 +174,6 @@
             <div class="daily-header">Daily Puzzles (<span id="daily-date-display">---</span>)</div>
             
             <div class="daily-slots">
-                <!-- Slots -->
                 <div class="slot-card" id="slot-1" onclick="startDailyGame(1)"><div class="slot-icon">1️⃣</div><div class="slot-label">Play</div></div>
                 <div class="slot-card locked" id="slot-2" onclick="startDailyGame(2)"><div class="slot-icon">2️⃣</div><div class="slot-label">Locked</div></div>
                 <div class="slot-card locked" id="slot-3" onclick="startDailyGame(3)"><div class="slot-icon">3️⃣</div><div class="slot-label">Locked</div></div>
@@ -245,7 +241,6 @@
                 <button id="give-up-btn" onclick="giveUpPractice()">GIVE UP</button>
             </div>
             
-            <!-- Play Again Button -->
             <div class="controls" id="post-game-controls" style="display: none;">
                 <button id="next-action-btn">CONTINUE</button>
             </div>
@@ -273,32 +268,33 @@
 // --- GLOBAL ASSETS ---
 let DISTANCES = {};
 let DIRECTIONS = {};
-const API_BASE = "https://api-v2.oec.world/tesseract/data.jsonrecords";
-const CUBE = "trade_i_baci_a_22";
+let EXPORTS_DATA = {};
 
 // --- CONFIGURATION ---
+// Updated to match your JSON keys ("jsonName")
 const SECTION_MAPPING = [
-    { id: 1, name: "Livestock", color: "#F0E68C", chapters: [1,2,3,4,5] },
-    { id: 2, name: "Crops", color: "#FDC02F", chapters: [6,7,8,9,10,11,12,13,14] },
-    { id: 3, name: "Oils & Fats", color: "#E89736", chapters: [15] },
-    { id: 4, name: "Processed Food", color: "#E4772E", chapters: [16,17,18,19,20,21,22,23,24] },
-    { id: 5, name: "Minerals & Fuels", color: "#6C4F3E", chapters: [25,26,27] },
-    { id: 6, name: "Chemicals", color: "#CF4E96", chapters: [28,29,30,31,32,33,34,35,36,37,38] },
-    { id: 7, name: "Plastics", color: "#954492", chapters: [39,40] },
-    { id: 8, name: "Leather", color: "#B3C148", chapters: [41,42,43] },
-    { id: 9, name: "Wood", color: "#5AA453", chapters: [44,45,46] },
-    { id: 10, name: "Paper", color: "#3B7D41", chapters: [47,48,49] },
-    { id: 11, name: "Textiles", color: "#3D9896", chapters: Array.from({length:14},(_,i)=>i+50) },
-    { id: 12, name: "Footwear", color: "#326C74", chapters: [64,65,66,67] },
-    { id: 13, name: "Stone & Glass", color: "#925255", chapters: [68,69,70] },
-    { id: 14, name: "Precious Metals", color: "#B82F3B", chapters: [71] },
-    { id: 15, name: "Metals", color: "#D15438", chapters: Array.from({length:12},(_,i)=>i+72) },
-    { id: 16, name: "Electronics", color: "#42A5F5", chapters: [84,85] },
-    { id: 17, name: "Transport", color: "#1976D2", chapters: [86,87,88,89] },
-    { id: 18, name: "Instruments", color: "#1565C0", chapters: [90,91,92] },
-    { id: 19, name: "Arms", color: "#546E7A", chapters: [93] },
-    { id: 20, name: "Misc", color: "#8D8D8D", chapters: [94,95,96] },
-    { id: 21, name: "Arts", color: "#616161", chapters: [97,98,99] }
+    { id: 1, jsonName: "Live Animals and Animal Products", color: "#F0E68C", chapters: [1,2,3,4,5] },
+    { id: 2, jsonName: "Vegetable Products(Crops)", color: "#FDC02F", chapters: [6,7,8,9,10,11,12,13,14] },
+    { id: 3, jsonName: "Animal or Vegetable Fats and Oils", color: "#E89736", chapters: [15] },
+    { id: 4, jsonName: "Processed Food, Tobacco and Drinks", color: "#E4772E", chapters: [16,17,18,19,20,21,22,23,24] },
+    { id: 5, jsonName: "Minerals, Ores & Fuels", color: "#6C4F3E", chapters: [25,26,27] },
+    { id: 6, jsonName: "Pharma, Chemical and Allied Industries", color: "#CF4E96", chapters: [28,29,30,31,32,33,34,35,36,37,38] },
+    { id: 7, jsonName: "Plastics & Rubbers", color: "#954492", chapters: [39,40] },
+    { id: 8, jsonName: "Leathers, Furs and Bags", color: "#B3C148", chapters: [41,42,43] },
+    { id: 9, jsonName: "Wood, Cork and Straw Articles", color: "#5AA453", chapters: [44,45,46] },
+    { id: 10, jsonName: "Paper, Pulp and Printed Materials", color: "#3B7D41", chapters: [47,48,49] },
+    { id: 11, jsonName: "Textiles", color: "#3D9896", chapters: Array.from({length:14},(_,i)=>i+50) },
+    { id: 12, jsonName: "Footwear & Headgear", color: "#326C74", chapters: [64,65,66,67] },
+    { id: 13, jsonName: "Stone, Glass and Ceramics", color: "#925255", chapters: [68,69,70] },
+    { id: 14, jsonName: "Precious Stones & Metals", color: "#B82F3B", chapters: [71] },
+    { id: 15, jsonName: "Metals", color: "#D15438", chapters: Array.from({length:12},(_,i)=>i+72) },
+    { id: 16, jsonName: "Electronics & Machinery", color: "#42A5F5", chapters: [84,85] },
+    { id: 17, jsonName: "Transport", color: "#1976D2", chapters: [86,87,88,89] },
+    { id: 18, jsonName: "Precision Instruments", color: "#1565C0", chapters: [90,91,92] },
+    { id: 19, jsonName: "Arms & Ammunitions", color: "#546E7A", chapters: [93] },
+    { id: 20, jsonName: "Furniture, Toys & Misc", color: "#8D8D8D", chapters: [94,95,96] },
+    { id: 21, jsonName: "Arts & Antiques", color: "#616161", chapters: [97,98,99] },
+    { id: 22, jsonName: "Unspecified", color: "#A9A9A9", chapters: [] }
 ];
 
 const COUNTRIES = [
@@ -348,7 +344,6 @@ const ARROW_MAP = { "N": "⬆️", "S": "⬇️", "E": "➡️", "W": "⬅️", 
 
 // --- UTILITIES ---
 
-// 1. Seeded RNG (Mulberry32)
 class SeededRNG {
     constructor(seedString) {
         let h = 2166136261 >>> 0;
@@ -365,23 +360,19 @@ class SeededRNG {
     }
 }
 
-// 2. Date Helper (IST)
 function getISTDateString() {
     return new Date().toLocaleString("en-CA", { timeZone: "Asia/Kolkata" }).split(',')[0];
 }
 
-// 3. Storage Manager (UPDATED FOR PERSISTENCE)
 const Storage = {
     KEY: 'tradle_history_v3',
     get() {
         const d = localStorage.getItem(this.KEY);
-        // Structure: { games: { date: { slot: { status, lives, guesses, targetIndex } } }, practice: { status, lives, guesses, targetIndex } }
         return d ? JSON.parse(d) : { games: {}, practice: null };
     },
     save(data) {
         localStorage.setItem(this.KEY, JSON.stringify(data));
     },
-    // Daily Games
     getDaily(date, slot) {
         const data = this.get();
         if (data.games[date] && data.games[date][slot]) return data.games[date][slot];
@@ -393,7 +384,6 @@ const Storage = {
         data.games[date][slot] = gameState;
         this.save(data);
     },
-    // Practice Games
     getPractice() {
         return this.get().practice;
     },
@@ -415,24 +405,32 @@ let gameState = {
     targetIndex: -1,
     lives: 5,
     isGameOver: false,
-    mode: 'practice', // 'daily', 'practice', 'review', 'retry'
-    slot: null,       // 1, 2, 3 (for daily)
-    guesses: []       // Array of indices
+    mode: 'practice', 
+    slot: null,
+    guesses: []
 };
 
 // --- INITIALIZATION ---
 async function startApp() {
     try {
-        const [distRes, dirRes] = await Promise.all([ fetch('distances.json'), fetch('directions.json') ]);
+        // Fetch all data files, including the new exports.json
+        const [distRes, dirRes, expRes] = await Promise.all([ 
+            fetch('distances.json'), 
+            fetch('directions.json'),
+            fetch('exports.json')
+        ]);
+        
         DISTANCES = await distRes.json();
         DIRECTIONS = await dirRes.json();
+        EXPORTS_DATA = await expRes.json();
         
         initTabs();
         updateDailyDashboard();
         renderHistory();
         startCountdown();
     } catch (err) {
-        alert("Error loading game files.");
+        alert("Error loading game files. Make sure distances.json, directions.json, and exports.json are in the same folder.");
+        console.error(err);
     }
 }
 
@@ -470,7 +468,6 @@ function updateDailyDashboard() {
     document.getElementById('daily-date-display').textContent = dateStr;
     const history = Storage.get().games[dateStr] || {};
     
-    // Slots Logic
     const slots = [1, 2, 3];
     let locked = false;
 
@@ -482,18 +479,15 @@ function updateDailyDashboard() {
         el.onclick = null; 
 
         if (gameData && (gameData.status === 'WON' || gameData.status === 'LOST')) {
-            // Completed
             el.classList.add(gameData.status === 'WON' ? 'won' : 'lost');
             el.querySelector('.slot-label').textContent = gameData.status === 'WON' ? "Won" : "Lost";
             el.onclick = () => alert("Game Finished. Check History.");
         } else if (gameData && gameData.status === 'IN_PROGRESS') {
-            // In Progress
             el.classList.add('progress');
             el.querySelector('.slot-label').textContent = "Resume";
             el.onclick = () => startDailyGame(s);
-            locked = true; // Lock future slots until this is done
+            locked = true; 
         } else {
-            // Not Started
             if (locked) {
                 el.classList.add('locked');
                 el.querySelector('.slot-label').textContent = "Locked";
@@ -528,12 +522,10 @@ function startCountdown() {
 // --- GAME LAUNCHERS ---
 
 function startPracticeGame() {
-    // Check for existing practice game
     const saved = Storage.getPractice();
     if (saved && saved.status === 'IN_PROGRESS') {
         initGame('practice', saved.targetIndex, null, saved.guesses, saved.lives);
     } else {
-        // New Game
         const idx = Math.floor(Math.random() * COUNTRIES.length);
         initGame('practice', idx);
     }
@@ -542,7 +534,7 @@ function startPracticeGame() {
 function giveUpPractice() {
     if (confirm("Are you sure you want to give up? The answer will be revealed.")) {
         gameState.lives = 0;
-        document.getElementById('lives-count').textContent = "💔"; // Broken heart
+        document.getElementById('lives-count').textContent = "💔"; 
         endGame(false);
     }
 }
@@ -552,7 +544,6 @@ function startDailyGame(slot) {
     const puzzles = getDailyPuzzles(dateStr);
     const targetIdx = puzzles[slot - 1];
     
-    // Check for saved progress
     const saved = Storage.getDaily(dateStr, slot);
     if (saved && saved.status === 'IN_PROGRESS') {
         initGame('daily', targetIdx, slot, saved.guesses, saved.lives);
@@ -566,7 +557,7 @@ function startReviewGame(date, slot) {
     if (!gameData) return;
     const puzzles = getDailyPuzzles(date);
     const targetIdx = puzzles[slot - 1];
-    initGame('review', targetIdx, slot, gameData.guesses, 0); // Lives don't matter in review
+    initGame('review', targetIdx, slot, gameData.guesses, 0); 
 }
 
 function startRetryGame(date, slot) {
@@ -585,10 +576,9 @@ function initGame(mode, targetIdx, slot = null, historicalGuesses = [], savedLiv
         slot: slot,
         lives: savedLives,
         isGameOver: false,
-        guesses: [] // Will populate below
+        guesses: [] 
     };
 
-    // UI Reset
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById('game-screen').classList.add('active');
     
@@ -608,7 +598,6 @@ function initGame(mode, targetIdx, slot = null, historicalGuesses = [], savedLiv
     btn.style.display = 'inline-block';
     document.getElementById('post-game-controls').style.display = 'none';
     
-    // Give Up Button Logic
     if (mode === 'practice') {
         giveUpBtn.style.display = 'inline-block';
     } else {
@@ -621,23 +610,22 @@ function initGame(mode, targetIdx, slot = null, historicalGuesses = [], savedLiv
         document.getElementById('message-area').innerHTML = `<span class="review-mode-banner">Review Mode: ${gameState.targetCountry.name}</span>`;
     }
 
-    fetchDataForCountry(gameState.targetCountry).then(() => {
-        // Restore Guesses
-        if (historicalGuesses.length > 0) {
-            historicalGuesses.forEach(idx => {
-                // IMPORTANT: Push to state so we don't lose them
-                gameState.guesses.push(idx);
-                const c = COUNTRIES[idx];
-                addGuessToUI(c, gameState.targetCountry);
-            });
-        }
-        
-        // If Review, show outcome immediately
-        if (mode === 'review') {
-            const won = historicalGuesses.includes(targetIdx);
-            endGame(won, true); 
-        }
-    });
+    // Load data from local JSON
+    fetchDataForCountry(gameState.targetCountry);
+
+    // Restore Guesses
+    if (historicalGuesses.length > 0) {
+        historicalGuesses.forEach(idx => {
+            gameState.guesses.push(idx);
+            const c = COUNTRIES[idx];
+            addGuessToUI(c, gameState.targetCountry);
+        });
+    }
+    
+    if (mode === 'review') {
+        const won = historicalGuesses.includes(targetIdx);
+        endGame(won, true); 
+    }
 }
 
 // --- GAMEPLAY INTERACTION ---
@@ -679,7 +667,6 @@ function handleGuess() {
     const guessIdx = COUNTRIES.findIndex(c => c.name.toLowerCase() === val.toLowerCase());
     if (guessIdx === -1) { alert("Please select a valid country."); return; }
     
-    // Check duplicate
     if (gameState.guesses.includes(guessIdx)) {
         alert("You already guessed that!");
         inputElement.value = "";
@@ -689,11 +676,9 @@ function handleGuess() {
     const guessCountry = COUNTRIES[guessIdx];
     gameState.guesses.push(guessIdx);
     
-    // 1. Update UI
     addGuessToUI(guessCountry, gameState.targetCountry);
     inputElement.value = "";
 
-    // 2. Logic
     let won = false;
     if (guessIdx === gameState.targetIndex) {
         won = true;
@@ -704,8 +689,6 @@ function handleGuess() {
         if (gameState.lives <= 0) endGame(false);
     }
 
-    // 3. Save State (Persistence)
-    // Only save if game isn't over (endGame handles the final save)
     if (!gameState.isGameOver) {
         const stateToSave = {
             status: 'IN_PROGRESS',
@@ -729,25 +712,20 @@ function addGuessToUI(guessCountry, targetCountry) {
     const guessKey = guessCountry.name.toLowerCase();
     const targetKey = targetCountry.name.toLowerCase();
     
-    // Check if this guess is the correct answer
     const isWinner = guessKey === targetKey;
 
     let distText = "N/A";
     let arrowText = "";
     let rawDist = null;
 
-    // 1. Calculate Distance
     if (DISTANCES[guessKey] && DISTANCES[guessKey][targetKey] !== undefined) {
         rawDist = Math.round(DISTANCES[guessKey][targetKey]);
         distText = rawDist.toLocaleString() + " km";
     }
 
-    // 2. Calculate Direction
-    // LOGIC: If distance is 0, DO NOT show direction. 
     if (rawDist !== null && rawDist === 0) {
         arrowText = ""; 
     } else {
-        // Only calculate direction if distance is greater than 0
         if (DIRECTIONS[guessKey] && DIRECTIONS[guessKey][targetKey]) {
             const rawDir = DIRECTIONS[guessKey][targetKey];
             const correctDir = REVERSE_COMPASS[rawDir] || rawDir;
@@ -755,16 +733,10 @@ function addGuessToUI(guessCountry, targetCountry) {
         }
     }
 
-    // 3. Winner Specific Overrides
     if (isWinner) {
-        // Light green background
         row.style.backgroundColor = "#eafaf1"; 
         row.style.borderColor = "#27ae60";
-        
-        // Hide distance text completely (as requested)
         distText = ""; 
-        
-        // Ensure direction is empty
         arrowText = ""; 
     }
 
@@ -776,7 +748,7 @@ function endGame(win, isReview = false) {
     gameState.isGameOver = true;
     inputElement.disabled = true;
     document.getElementById('guess-btn').style.display = 'none';
-    document.getElementById('give-up-btn').style.display = 'none'; // Hide Give Up
+    document.getElementById('give-up-btn').style.display = 'none'; 
     
     const msg = document.getElementById('message-area');
     if (win) {
@@ -787,7 +759,6 @@ function endGame(win, isReview = false) {
         msg.className = "lose";
     }
 
-    // Save Final Result
     if (!isReview) {
         const finalState = {
             status: win ? 'WON' : 'LOST',
@@ -799,27 +770,21 @@ function endGame(win, isReview = false) {
         if (gameState.mode === 'daily') {
             Storage.saveDaily(getISTDateString(), gameState.slot, finalState);
         } else if (gameState.mode === 'practice') {
-            // For practice, we clear the "IN_PROGRESS" state so next click is fresh
             Storage.clearPractice();
         }
     }
 
-    // Show Continue Button
     const ctrl = document.getElementById('post-game-controls');
     ctrl.style.display = 'flex';
     const btn = document.getElementById('next-action-btn');
     
-    // IMPROVEMENT 2: Handle 'retry' mode separately from 'practice'
     if (gameState.mode === 'practice') {
-        // Practice loop -> Play another random game
         btn.textContent = "Play Another";
         btn.onclick = startPracticeGame; 
     } else if (gameState.mode === 'daily') {
-        // Daily flow -> Go back to Daily Menu
         btn.textContent = "Back to Menu";
         btn.onclick = () => switchTab('daily');
     } else {
-        // History / Retry / Review flow -> Go back to History list
         btn.textContent = "Back to History";
         btn.onclick = () => switchTab('history');
     }
@@ -847,8 +812,6 @@ function renderHistory() {
             if (!dayData[slot]) return;
             const game = dayData[slot];
             
-            // Only show completed games in History table? 
-            // Or show in-progress too? Usually History implies completed.
             if (game.status === 'IN_PROGRESS') return; 
 
             const puzzles = getDailyPuzzles(date);
@@ -898,51 +861,140 @@ function closeModal() { document.getElementById('action-modal').style.display = 
 document.getElementById('modal-view-btn').onclick = () => { closeModal(); if(currentModalContext) startReviewGame(currentModalContext.date, currentModalContext.slot); };
 document.getElementById('modal-retry-btn').onclick = () => { closeModal(); if(currentModalContext) startRetryGame(currentModalContext.date, currentModalContext.slot); };
 
-// --- CHART & DATA FETCHING (Same as before) ---
-async function fetchDataForCountry(country) {
+// --- DATA FETCHING & PROCESSING (NEW LOCAL JSON) ---
+
+function fetchDataForCountry(country) {
     document.getElementById('loader').style.display = 'block';
     document.getElementById('game-ui').style.display = 'none';
-    try {
-        const hs2Url = `${API_BASE}?cube=${CUBE}&drilldowns=HS2,Exporter+Country&measures=Trade+Value&include=Exporter+Country:${country.id}&time=Year.latest`;
-        const hs4Url = `${API_BASE}?cube=${CUBE}&drilldowns=HS4,Exporter+Country&measures=Trade+Value&include=Exporter+Country:${country.id}&time=Year.latest&limit=10000`;
-        const [hs2Res, hs4Res] = await Promise.all([fetch(hs2Url), fetch(hs4Url)]);
-        const hs2Data = (await hs2Res.json()).data;
-        const hs4Data = (await hs4Res.json()).data;
-        processData(hs2Data, hs4Data);
+    
+    // Slight timeout to simulate loading (optional, prevents flickering)
+    setTimeout(() => {
+        // Look up data in the global object
+        const data = EXPORTS_DATA[country.name];
+        
+        if (!data) {
+            document.getElementById('loader').textContent = `Error: Data not found for ${country.name}`;
+            return;
+        }
+
+        processData(data);
         document.getElementById('loader').style.display = 'none';
         document.getElementById('game-ui').style.display = 'block';
-    } catch (err) {
-        document.getElementById('loader').textContent = "Error loading data. Check connection.";
-    }
+    }, 100);
 }
 
-function processData(hs2Data, hs4Data) {
-    const globalTotal = hs4Data.reduce((sum, item) => sum + item["Trade Value"], 0);
-    document.getElementById('total-export-display').textContent = `Total: $${(globalTotal/1e9).toFixed(2)} B`;
-    const sectionStats = SECTION_MAPPING.map(s => ({ ...s, value: 0, items: [] }));
-    hs2Data.forEach(item => {
-        let chap = parseInt(item["HS2 ID"].toString().slice(-2));
-        const sec = sectionStats.find(s => s.chapters.includes(chap));
-        if (sec) sec.value += item["Trade Value"];
+function processData(countryData) {
+    const totalExports = countryData.meta.total_exports;
+    
+    document.getElementById('total-export-display').textContent = `Total: $${(totalExports/1e9).toFixed(2)} B`;
+    
+    // 1. Create a map of Sections based on SECTION_MAPPING
+    const sectionMap = {};
+    SECTION_MAPPING.forEach(s => {
+        sectionMap[s.jsonName] = {
+            id: s.id,
+            name: s.jsonName,
+            color: s.color,
+            totalValue: countryData.sections[s.jsonName] || 0, // Get the total size of the section from JSON
+            children: []
+        };
     });
-    const threshold = globalTotal * 0.0005;
-    hs4Data.forEach(item => {
-        const code = item["HS4 ID"].toString().padStart(4,'0').slice(-4);
-        const chap = parseInt(code.substring(0, 2));
-        const sec = sectionStats.find(s => s.chapters.includes(chap));
-        if (sec) sec.items.push({ code: item["HS4 ID"], name: item["HS4"], value: item["Trade Value"] });
+
+    // 2. Distribute products into sections based on JSON 'sections' keys would be hard 
+    // because products list is flat. 
+    // Strategy: We iterate top_products. For each product, we find which Section it belongs to 
+    // by using the HS Code -> Chapter -> Section mapping logic.
+    
+    const topProducts = countryData.top_products || [];
+    
+    topProducts.forEach(prod => {
+        const hsCode = prod.hs4_id.toString().padStart(4, '0'); // e.g. "0101" or "52709" -> "52709" is bad. 
+        // NOTE: The JSON example showed hs4_id as integer: 52709. 
+        // Standard HS4 is 4 digits. OEC sometimes returns 6 digits ID for HS4 (e.g. 52709 = 2709).
+        // Let's use the code logic that OEC uses: 
+        // HS4 ID usually: section 104707 -> Chapter 47. 
+        // 52709 -> Chapter 27.
+        // Logic: if id > 99999, first 3 digits? No.
+        // Simpler: The last 4 digits are the HS4 code. The digits before that are usually the Chapter or internal ID.
+        // Actually, looking at your data: 52709. 2709 is Crude Oil. So 5 is just a prefix?
+        // 147108 -> 7108 Gold. 14 is prefix.
+        
+        // Let's try to map the PRODUCT to the SECTION by using the SECTION MAPPING LOGIC.
+        // We need to parse the Chapter.
+        // In OEC Tesseract IDs: usually the last 2 digits of the string BEFORE the last 2 digits.
+        // Example: 52709. Last 2 digits = 09 (position). Digits before = 527. 27 is chapter.
+        // Example: 147108. Last 2 = 08. Digits before = 1471. 71 is chapter.
+        
+        let hsString = prod.hs4_id.toString();
+        let chapter;
+        
+        // Robust HS Chapter extraction from OEC IDs
+        if (hsString.length === 5) {
+            // e.g. 52709 -> 27
+            chapter = parseInt(hsString.substring(1, 3));
+        } else if (hsString.length === 6) {
+            // e.g. 147108 -> 71
+            chapter = parseInt(hsString.substring(2, 4));
+        } else {
+            // Fallback or short code
+             chapter = parseInt(hsString.substring(0, hsString.length - 2));
+        }
+
+        // Find which section this chapter belongs to
+        const sectionConfig = SECTION_MAPPING.find(s => s.chapters.includes(chapter));
+        
+        if (sectionConfig) {
+            const mapEntry = sectionMap[sectionConfig.jsonName];
+            if (mapEntry) {
+                mapEntry.children.push({
+                    name: prod.hs4_name,
+                    value: prod.value,
+                    code: prod.hs4_id
+                });
+            }
+        } else {
+            // If mapping fails, put in Unspecified
+            sectionMap["Unspecified"].children.push({
+                name: prod.hs4_name,
+                value: prod.value,
+                code: prod.hs4_id
+            });
+        }
     });
+
+    // 3. Construct the Final Tree
     const finalTree = [];
-    sectionStats.forEach(s => {
-        if (s.value === 0) return;
-        const main = []; let other = 0;
-        s.items.forEach(i => { if (i.value >= threshold) main.push(i); else other += i.value; });
-        const discrepancy = s.value - s.items.reduce((a,b)=>a+b.value,0);
-        if (discrepancy > 0) other += discrepancy;
-        if (other > 0) main.push({ name: "Other " + s.name, value: other, isOther: true });
-        finalTree.push({ id: s.id, name: s.name, value: s.value, color: s.color, children: main });
+    
+    Object.values(sectionMap).forEach(sec => {
+        if (sec.totalValue <= 0 && sec.children.length === 0) return;
+
+        // Calculate size of "Other" (products not in top list)
+        const childrenSum = sec.children.reduce((acc, c) => acc + c.value, 0);
+        let otherValue = sec.totalValue - childrenSum;
+        
+        // Sanity check: sometimes filtered products might sum more due to data inconsistencies, though unlikely with this JSON
+        if (otherValue < 0) otherValue = 0;
+
+        // Prepare children array
+        const children = [...sec.children];
+        if (otherValue > 0) {
+            children.push({
+                name: "Other " + sec.name,
+                value: otherValue,
+                isOther: true
+            });
+        }
+
+        finalTree.push({
+            id: sec.id,
+            name: sec.name,
+            value: sec.totalValue,
+            color: sec.color,
+            children: children
+        });
     });
-    generateChart(finalTree, globalTotal);
+
+    generateChart(finalTree, totalExports);
 }
 
 // --- TREEMAP ENGINE ---
@@ -950,6 +1002,8 @@ class TreemapLayout {
     constructor(w,h){this.w=w;this.h=h}
     calculate(data){
         const total=data.reduce((s,i)=>s+i.value,0), area=this.w*this.h;
+        // Protection against divide by zero if total is 0
+        if(total <= 0) return [];
         const items=data.map(i=>({...i, area:(i.value/total)*area})).sort((a,b)=>b.value-a.value);
         return this.squarify(items,[],{x:0,y:0,w:this.w,h:this.h});
     }
@@ -978,21 +1032,31 @@ class TreemapLayout {
         });
     }
 }
+
 function generateChart(data, total) {
     const svg = document.getElementById('treemap-svg'), legend = document.getElementById('legend');
     svg.innerHTML=''; legend.innerHTML='';
     const width=1000, height=window.innerWidth<768?1200:500;
     svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    
+    // Safety check for empty data
+    if(!data || data.length === 0) {
+        svg.innerHTML = '<text x="500" y="250" text-anchor="middle">No Data Available</text>';
+        return;
+    }
+
     new TreemapLayout(width,height).calculate(data).forEach(sec => {
         const l = document.createElement('div'); l.className='legend-item'; l.style.backgroundColor=sec.color;
+        l.title = sec.name; // Add tooltip to legend
         l.onmouseenter=()=>highlight(sec.id); l.onmouseleave=resetHighlight;
         legend.appendChild(l);
         const g = document.createElementNS("http://www.w3.org/2000/svg","g");
         g.setAttribute("class","section-group"); g.id=`g-${sec.id}`;
+        
         new TreemapLayout(sec.w,sec.h).calculate(sec.children).forEach(child => {
             const r = document.createElementNS("http://www.w3.org/2000/svg","rect");
             r.setAttribute("x", sec.x+child.x); r.setAttribute("y", sec.y+child.y);
-            r.setAttribute("width", child.w); r.setAttribute("height", child.h);
+            r.setAttribute("width", Math.max(0, child.w)); r.setAttribute("height", Math.max(0, child.h)); // Prevent negative values
             r.setAttribute("fill", sec.color); r.setAttribute("class","node-rect");
             if(child.isOther) r.setAttribute("fill-opacity","0.6");
             r.onmousemove=(e)=>showTooltip(e,child,total,sec.name); r.onmouseleave=hideTooltip;
@@ -1021,8 +1085,10 @@ function generateChart(data, total) {
         svg.appendChild(g);
     });
 }
+
 function highlight(id) { document.querySelectorAll('.section-group').forEach(g => g.style.opacity = '0.1'); document.getElementById(`g-${id}`).style.opacity = '1'; }
 function resetHighlight() { document.querySelectorAll('.section-group').forEach(g => g.style.opacity = '1'); }
+
 function showTooltip(e, d, t, s) {
     const tt = document.getElementById('tooltip');
     tt.innerHTML = `<div class="sub">${s}</div><strong>${d.name}</strong><div>$${(d.value/1e6).toLocaleString()} M</div><div style="color:#ffd700">${((d.value/t)*100).toFixed(2)}%</div>`;
