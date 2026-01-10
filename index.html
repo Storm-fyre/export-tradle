@@ -1050,7 +1050,7 @@ function generateChart(data, total) {
             r.onmousemove=(e)=>showTooltip(e,child,total,sec.name); r.onmouseleave=hideTooltip;
             g.appendChild(r);
 
-            // --- TEXT LAYOUT ENGINE v5 (Dynamic & Breathable) ---
+            // --- TEXT LAYOUT ENGINE v5.1 (The "Invisible Wheat" Fix) ---
             
             if(child.w > 35 && child.h > 20) {
                 
@@ -1060,8 +1060,9 @@ function generateChart(data, total) {
                 
                 // CONSTANTS
                 const FLOOR = 10; 
-                const MAX_FONT = 40; // UPDATED: 40px Cap
-                const CHAR_CONST = 0.55; // UPDATED: Narrower char width estimate (0.55)
+                const MAX_FONT = 40; 
+                // TWEAK 1: More permissive character width estimate (was 0.55)
+                const CHAR_CONST = 0.50; 
 
                 const getFontSizeForWidth = (str, availableWidth) => {
                     return availableWidth / (str.length * CHAR_CONST);
@@ -1075,19 +1076,19 @@ function generateChart(data, total) {
                     const w1 = text.substring(0, firstSpace);
                     const w2 = text.substring(firstSpace + 1);
 
-                    const fsStackW = getFontSizeForWidth(w1, boxW * 0.9);
+                    const fsStackW = getFontSizeForWidth(w1, boxW * 0.95); // TWEAK 2: Less padding (0.9 -> 0.95)
                     const fsStackH = boxH / 3.5;
                     
                     let fsStack = Math.min(fsStackW, fsStackH, MAX_FONT);
 
                     if (fsStack >= FLOOR) {
-                        const maxChars = Math.floor((boxW * 0.9) / (fsStack * CHAR_CONST));
+                        const maxChars = Math.floor((boxW * 0.95) / (fsStack * CHAR_CONST));
                         let line2Text = w2;
                         let validStack = true;
 
                         if (w2.length > maxChars) {
                             const avail = Math.max(0, maxChars - 2);
-                            if (avail < 1) { // ".." check
+                            if (avail < 1) { 
                                 validStack = false; 
                             } else {
                                 line2Text = w2.substring(0, avail) + "..";
@@ -1133,23 +1134,32 @@ function generateChart(data, total) {
 
                 // --- STRATEGY 2: SINGLE LINE FALLBACK ---
                 if (!rendered) {
-                    const fsSingleW = getFontSizeForWidth(text, boxW * 0.9);
-                    
-                    // UPDATED: Height allowance increased to 70%
+                    // TWEAK 3: Less padding (0.9 -> 0.95)
+                    const fsSingleW = getFontSizeForWidth(text, boxW * 0.95);
                     const fsSingleH = boxH * 0.7; 
                     
                     let fsSingle = Math.min(fsSingleW, fsSingleH, MAX_FONT);
 
                     if (fsSingle < FLOOR) fsSingle = FLOOR;
                     
-                    const maxChars = Math.floor((boxW * 0.9) / (fsSingle * CHAR_CONST));
+                    const maxChars = Math.floor((boxW * 0.95) / (fsSingle * CHAR_CONST));
                     let finalText = "";
                     
+                    // --- FIX START: THE SHORT WORD OVERRIDE ---
                     if (text.length <= maxChars) {
                         finalText = text; 
-                    } else {
-                        const visibleChars = maxChars - 2;
-                        if (visibleChars >= 6) {
+                    } 
+                    // If word is short (<= 6 chars), force it even if math says it's tight.
+                    // This fixes "Wheat", "Rice", "Corn" in narrow columns.
+                    else if (text.length <= 6) {
+                        finalText = text;
+                    }
+                    // --- FIX END ---
+                    else {
+                        // TWEAK 4: Aggressive Truncation
+                        // Allow truncation down to 3 chars + dots (e.g. "Whe..")
+                        const visibleChars = maxChars - 1; 
+                        if (visibleChars >= 3) {
                             finalText = text.substring(0, visibleChars) + "..";
                         }
                     }
@@ -1161,8 +1171,6 @@ function generateChart(data, total) {
                         t.setAttribute("pointer-events", "none");
                         t.setAttribute("font-size", fsSingle);
                         
-                        // UPDATED: Dynamic Percentage Logic
-                        // Only show percentage if there is truly enough height
                         const showPercent = boxH > (fsSingle * 2.2);
 
                         const tspan = document.createElementNS("http://www.w3.org/2000/svg","tspan");
@@ -1180,7 +1188,6 @@ function generateChart(data, total) {
                             pctSpan.setAttribute("dy", "1.2em");
                             t.appendChild(pctSpan);
                         } else {
-                            // Centered perfectly if no percentage (Name takes priority)
                             t.setAttribute("y", sec.y + child.y + child.h/2 + (fsSingle * 0.3));
                         }
                         g.appendChild(t);
