@@ -1020,48 +1020,89 @@ class TreemapLayout {
 function generateChart(data, total) {
     const svg = document.getElementById('treemap-svg'), legend = document.getElementById('legend');
     svg.innerHTML=''; legend.innerHTML='';
+    
+    // Keep existing height logic (Taller on mobile for density)
     const width=1000, height=window.innerWidth<768?1200:500;
     svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
     
-    // Safety check for empty data
     if(!data || data.length === 0) {
         svg.innerHTML = '<text x="500" y="250" text-anchor="middle">No Data Available</text>';
         return;
     }
 
     new TreemapLayout(width,height).calculate(data).forEach(sec => {
+        // Legend setup
         const l = document.createElement('div'); l.className='legend-item'; l.style.backgroundColor=sec.color;
-        l.title = sec.name; // Add tooltip to legend
+        l.title = sec.name;
         l.onmouseenter=()=>highlight(sec.id); l.onmouseleave=resetHighlight;
         legend.appendChild(l);
+
         const g = document.createElementNS("http://www.w3.org/2000/svg","g");
         g.setAttribute("class","section-group"); g.id=`g-${sec.id}`;
         
         new TreemapLayout(sec.w,sec.h).calculate(sec.children).forEach(child => {
+            // Draw Rectangle
             const r = document.createElementNS("http://www.w3.org/2000/svg","rect");
             r.setAttribute("x", sec.x+child.x); r.setAttribute("y", sec.y+child.y);
-            r.setAttribute("width", Math.max(0, child.w)); r.setAttribute("height", Math.max(0, child.h)); // Prevent negative values
+            r.setAttribute("width", Math.max(0, child.w)); r.setAttribute("height", Math.max(0, child.h));
             r.setAttribute("fill", sec.color); r.setAttribute("class","node-rect");
             if(child.isOther) r.setAttribute("fill-opacity","0.6");
             r.onmousemove=(e)=>showTooltip(e,child,total,sec.name); r.onmouseleave=hideTooltip;
             g.appendChild(r);
-            if(child.w>35 && child.h>25) {
-                let fs = Math.min(14, child.w/6, child.h/2.5);
-                if(fs>=10) {
+
+            // --- IMPROVED TEXT LOGIC ---
+            // 1. Aggressive Threshold: Allow text in boxes as small as 16x12 pixels
+            if(child.w > 16 && child.h > 12) {
+
+                // 2. Dynamic Font Scaling
+                // Calculate size based on width (divide by 5) and height (divide by 1.2)
+                // Cap it at 14px so big boxes don't look cartoonish
+                let fs = Math.min(14, child.w / 5, child.h / 1.2);
+
+                // 3. Lower the Floor: Allow fonts as small as 6px (readable when zoomed)
+                if(fs >= 6) {
                     const t = document.createElementNS("http://www.w3.org/2000/svg","text");
-                    t.setAttribute("x", sec.x+child.x+child.w/2); t.setAttribute("y", sec.y+child.y+child.h/2);
-                    t.setAttribute("text-anchor","middle"); t.setAttribute("dominant-baseline","middle");
-                    const name = document.createElementNS("http://www.w3.org/2000/svg","tspan");
-                    name.textContent = child.name.length > (child.w/fs*1.5) ? child.name.slice(0,(child.w/fs*1.5))+'..' : child.name;
-                    name.setAttribute("class","node-text"); name.setAttribute("font-size",fs); name.setAttribute("dy", child.h>45?"-0.3em":"0.1em");
-                    t.appendChild(name);
-                    if(child.h>45) {
-                        const pct = document.createElementNS("http://www.w3.org/2000/svg","tspan");
-                        pct.textContent = ((child.value/total)*100).toFixed(1)+'%';
-                        pct.setAttribute("class","node-percent"); pct.setAttribute("font-size",fs*0.85);
-                        pct.setAttribute("x", sec.x+child.x+child.w/2); pct.setAttribute("dy","1.2em");
-                        t.appendChild(pct);
+                    t.setAttribute("x", sec.x+child.x+child.w/2);
+                    t.setAttribute("text-anchor","middle"); 
+                    t.setAttribute("dominant-baseline","middle");
+                    t.setAttribute("pointer-events","none"); // Ensure clicks go through to the rect
+
+                    // 4. Smart Truncation (Prevent Horizontal Overflow)
+                    // Estimate that a character is roughly 0.6 times the font size in width
+                    const maxChars = Math.floor(child.w / (fs * 0.6));
+                    let displayName = child.name;
+                    if(displayName.length > maxChars) {
+                        displayName = displayName.substring(0, Math.max(0, maxChars-2)) + "..";
                     }
+
+                    // 5. Layout Decision: 1 Line vs 2 Lines
+                    // Only show percentage if box is tall enough (>26px) AND font is decent size (>9px)
+                    const showPercent = child.h > 26 && fs > 9;
+
+                    // NAME Element
+                    const nameSpan = document.createElementNS("http://www.w3.org/2000/svg","tspan");
+                    nameSpan.textContent = displayName;
+                    nameSpan.setAttribute("class","node-text");
+                    nameSpan.setAttribute("font-size", fs);
+
+                    if(showPercent) {
+                        // Two-line layout: Shift Name UP, Percent DOWN
+                        nameSpan.setAttribute("y", sec.y+child.y+child.h/2 - fs*0.5); 
+                        t.appendChild(nameSpan);
+
+                        const pctSpan = document.createElementNS("http://www.w3.org/2000/svg","tspan");
+                        pctSpan.textContent = ((child.value/total)*100).toFixed(1)+'%';
+                        pctSpan.setAttribute("class","node-percent");
+                        pctSpan.setAttribute("font-size", fs * 0.85); // Percent slightly smaller
+                        pctSpan.setAttribute("x", sec.x+child.x+child.w/2);
+                        pctSpan.setAttribute("dy", fs * 1.2); 
+                        t.appendChild(pctSpan);
+                    } else {
+                        // One-line layout: Center Name perfectly vertically
+                        nameSpan.setAttribute("y", sec.y+child.y+child.h/2 + 1); // +1 for visual balance
+                        t.appendChild(nameSpan);
+                    }
+
                     g.appendChild(t);
                 }
             }
