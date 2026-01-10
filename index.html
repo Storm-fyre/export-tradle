@@ -1021,7 +1021,7 @@ function generateChart(data, total) {
     const svg = document.getElementById('treemap-svg'), legend = document.getElementById('legend');
     svg.innerHTML=''; legend.innerHTML='';
     
-    // Canvas setup
+    // Canvas setup (Mobile height 1200px, Desktop 500px)
     const width=1000, height=window.innerWidth<768?1200:500;
     svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
     
@@ -1050,61 +1050,129 @@ function generateChart(data, total) {
             r.onmousemove=(e)=>showTooltip(e,child,total,sec.name); r.onmouseleave=hideTooltip;
             g.appendChild(r);
 
-            // --- FIT-TO-WIDTH LOGIC (8px Floor) ---
-            if(child.w > 16 && child.h > 12) {
-
-                // 1. Geometric Max
-                const geoFS = Math.min(14, child.w / 3, child.h / 1.1);
-
-                // 2. Content Max
-                const contentFS = child.w / (child.name.length * 0.65);
-
-                // 3. The Decision
-                let fs = Math.min(geoFS, contentFS);
-
-                // 4. Determine Truncation (Floor raised to 8px)
-                let displayName = child.name;
+            // --- ADVANCED TEXT LAYOUT ENGINE ---
+            
+            // Only attempt text if the box is physically capable of holding 12px text
+            // Box must be at least 20px wide and 14px high to even try.
+            if(child.w > 20 && child.h > 14) {
                 
-                if (fs < 8) {
-                    fs = 8; // Hard floor is now 8px
+                const boxW = child.w;
+                const boxH = child.h;
+                const text = child.name;
+                
+                // Helper: Estimate font size needed to fit a string into a specific width
+                // We assume average char width is ~0.6 of font size
+                const getFontSizeForWidth = (str, availableWidth) => {
+                    return availableWidth / (str.length * 0.6);
+                };
+
+                // --- SCENARIO 1: SINGLE LINE LAYOUT ---
+                // Limit: 90% of width, 60% of height (to leave room for %)
+                const fsSingleW = getFontSizeForWidth(text, boxW * 0.9);
+                const fsSingleH = boxH * 0.6; 
+                const fsSingle = Math.min(fsSingleW, fsSingleH);
+
+                // --- SCENARIO 2: STACKED LAYOUT (2 Lines) ---
+                let fsDouble = 0;
+                let line1 = "", line2 = "";
+                
+                // Only attempt split if there is a space
+                if (text.includes(" ")) {
+                    // Find the space closest to the middle for balance
+                    const mid = text.length / 2;
+                    const spaces = [...text.matchAll(/ /g)].map(m => m.index);
+                    const splitIdx = spaces.reduce((prev, curr) => 
+                        Math.abs(curr - mid) < Math.abs(prev - mid) ? curr : prev
+                    );
                     
-                    // Calculate how many chars fit at 8px
-                    const maxChars = Math.floor(child.w / (fs * 0.6));
-                    if(displayName.length > maxChars) {
-                        displayName = displayName.substring(0, Math.max(0, maxChars-2)) + "..";
+                    line1 = text.substring(0, splitIdx);
+                    line2 = text.substring(splitIdx + 1);
+                    const longestLine = line1.length > line2.length ? line1 : line2;
+
+                    // Limit: 90% of width, 40% of height per line (total 80%)
+                    const fsDoubleW = getFontSizeForWidth(longestLine, boxW * 0.9);
+                    const fsDoubleH = (boxH * 0.8) / 2; 
+                    fsDouble = Math.min(fsDoubleW, fsDoubleH);
+                }
+
+                // --- DECISION TIME ---
+                // We prefer stacking if it gives us a significantly larger font (e.g. +10% larger)
+                // Otherwise we stick to single line for cleanliness.
+                const useStack = (fsDouble > fsSingle * 1.1);
+                let finalFS = useStack ? fsDouble : fsSingle;
+
+                // --- APPLY FLOOR (LOWER LIMIT) ---
+                // The User commanded: Floor is 12px.
+                if (finalFS < 12) finalFS = 12;
+
+                // --- RENDER TEXT ---
+                const t = document.createElementNS("http://www.w3.org/2000/svg","text");
+                t.setAttribute("x", sec.x + child.x + child.w/2);
+                t.setAttribute("text-anchor", "middle"); 
+                t.setAttribute("pointer-events", "none");
+                t.setAttribute("font-size", finalFS);
+                
+                // Check if text needs truncation at this size
+                // (If the box is small, 12px might be too big, so we cut the text)
+                const truncate = (str) => {
+                    const maxChars = Math.floor(boxW / (finalFS * 0.6));
+                    return str.length > maxChars ? str.substring(0, Math.max(0, maxChars-2)) + ".." : str;
+                };
+
+                // Determine Percentage visibility
+                // Logic: Do we have vertical space left?
+                // Single line takes ~1em. Stacked takes ~2em. Percentage takes ~1em.
+                // We need boxHeight > (lines + 1) * fontSize
+                const linesCount = useStack ? 2 : 1;
+                const showPercent = boxH > (finalFS * (linesCount + 1.2));
+
+                if (useStack) {
+                    // Draw Line 1
+                    const tspan1 = document.createElementNS("http://www.w3.org/2000/svg","tspan");
+                    tspan1.textContent = truncate(line1);
+                    tspan1.setAttribute("x", sec.x + child.x + child.w/2);
+                    // Vertical align: If showing %, shift up. If not, center.
+                    tspan1.setAttribute("dy", showPercent ? "-0.2em" : "0.3em"); // Adjust based on % presence
+                    tspan1.setAttribute("class", "node-text");
+                    t.appendChild(tspan1);
+
+                    // Draw Line 2
+                    const tspan2 = document.createElementNS("http://www.w3.org/2000/svg","tspan");
+                    tspan2.textContent = truncate(line2);
+                    tspan2.setAttribute("x", sec.x + child.x + child.w/2);
+                    tspan2.setAttribute("dy", "1.1em");
+                    tspan2.setAttribute("class", "node-text");
+                    t.appendChild(tspan2);
+
+                    // Center the whole group vertically
+                    // The 'y' needs to be the middle of the box
+                    // If showing %, we start higher.
+                    t.setAttribute("y", sec.y + child.y + child.h/2 - (finalFS * 0.5));
+
+                } else {
+                    // Draw Single Line
+                    const tspan = document.createElementNS("http://www.w3.org/2000/svg","tspan");
+                    tspan.textContent = truncate(text);
+                    tspan.setAttribute("class", "node-text");
+                    t.appendChild(tspan);
+
+                    // Center vertically
+                    if (showPercent) {
+                        t.setAttribute("y", sec.y + child.y + child.h/2 - (finalFS * 0.2)); 
+                    } else {
+                        t.setAttribute("y", sec.y + child.y + child.h/2 + (finalFS * 0.3)); // Perfect center
                     }
                 }
 
-                // 5. Layout Logic
-                const t = document.createElementNS("http://www.w3.org/2000/svg","text");
-                t.setAttribute("x", sec.x+child.x+child.w/2);
-                t.setAttribute("text-anchor","middle"); 
-                t.setAttribute("dominant-baseline","middle");
-                t.setAttribute("pointer-events","none");
-
-                // Show percentage only if vertical room exists and font is decent (>9px)
-                const showPercent = child.h > 26 && fs > 9;
-
-                const nameSpan = document.createElementNS("http://www.w3.org/2000/svg","tspan");
-                nameSpan.textContent = displayName;
-                nameSpan.setAttribute("class","node-text");
-                nameSpan.setAttribute("font-size", fs);
-
-                if(showPercent) {
-                    nameSpan.setAttribute("y", sec.y+child.y+child.h/2 - fs*0.5); 
-                    t.appendChild(nameSpan);
-
+                // Draw Percentage (if room)
+                if (showPercent) {
                     const pctSpan = document.createElementNS("http://www.w3.org/2000/svg","tspan");
                     pctSpan.textContent = ((child.value/total)*100).toFixed(1)+'%';
                     pctSpan.setAttribute("class","node-percent");
-                    pctSpan.setAttribute("font-size", fs * 0.85);
-                    pctSpan.setAttribute("x", sec.x+child.x+child.w/2);
-                    pctSpan.setAttribute("dy", fs * 1.2); 
+                    pctSpan.setAttribute("font-size", finalFS * 0.85);
+                    pctSpan.setAttribute("x", sec.x + child.x + child.w/2);
+                    pctSpan.setAttribute("dy", "1.2em");
                     t.appendChild(pctSpan);
-                } else {
-                    // Center vertically
-                    nameSpan.setAttribute("y", sec.y+child.y+child.h/2 + 1); 
-                    t.appendChild(nameSpan);
                 }
 
                 g.appendChild(t);
