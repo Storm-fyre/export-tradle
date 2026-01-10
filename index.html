@@ -1050,8 +1050,11 @@ function generateChart(data, total) {
             r.onmousemove=(e)=>showTooltip(e,child,total,sec.name); r.onmouseleave=hideTooltip;
             g.appendChild(r);
 
-            // --- STRICT TEXT LAYOUT ENGINE ---
-            if(child.w > 20 && child.h > 14) {
+            // --- REVISED TEXT LAYOUT ENGINE ---
+            
+            // RULE 1: STRICTER SIZE THRESHOLD
+            // Increased from 20x14 to 35x20 to eliminate "sliver" labels
+            if(child.w > 35 && child.h > 20) {
                 
                 const boxW = child.w;
                 const boxH = child.h;
@@ -1063,13 +1066,12 @@ function generateChart(data, total) {
                     return availableWidth / (str.length * 0.6);
                 };
 
-                // --- ATTEMPT STACKING (The "Must Have" Logic) ---
+                // --- ATTEMPT STACKING ---
                 let canStack = false;
                 let fsStack = 0;
                 let line1 = "", line2 = "";
 
                 if (text.includes(" ")) {
-                    // Split logic
                     const mid = text.length / 2;
                     const spaces = [...text.matchAll(/ /g)].map(m => m.index);
                     const splitIdx = spaces.reduce((prev, curr) => 
@@ -1079,20 +1081,13 @@ function generateChart(data, total) {
                     line2 = text.substring(splitIdx + 1);
                     const longestLine = line1.length > line2.length ? line1 : line2;
 
-                    // CALCULATION:
-                    // 1. Width: Longest word must fit in 90% of box width
+                    // Calc Font Size
                     const fsStackW = getFontSizeForWidth(longestLine, boxW * 0.9);
-                    
-                    // 2. Height: Must fit 3 LINES (Word 1 + Word 2 + Percentage)
-                    // We estimate we need roughly 3.5em vertical space (1.1 + 1.1 + 1.3)
                     const fsStackH = boxH / 3.5;
-
-                    // 3. Result
                     fsStack = Math.min(fsStackW, fsStackH);
 
-                    // VALIDATION:
-                    // Condition A: Font must be >= Floor (No truncation allowed for stacking)
-                    // Condition B: Percentage is implicitly guaranteed by fsStackH calculation above
+                    // Check: Both lines must fit FULLY to use stack mode
+                    // We don't want to truncate individual lines in a stack for cleanliness
                     if (fsStack >= FLOOR) {
                         canStack = true;
                     }
@@ -1103,18 +1098,12 @@ function generateChart(data, total) {
                 t.setAttribute("text-anchor", "middle"); 
                 t.setAttribute("pointer-events", "none");
 
-                // --- RENDER ---
                 if (canStack) {
-                    // *** STACKED MODE (Perfect & Full) ***
+                    // *** STACKED MODE (Full words only) ***
                     t.setAttribute("font-size", fsStack);
                     
-                    // Center vertically for 3 lines group
-                    // Start 'y' is center minus half height of block
-                    // Block height ~ 3em. Start y = center - 1.5em?
-                    // Let's position manually relative to center
                     const centerY = sec.y + child.y + child.h/2;
 
-                    // Line 1 (Top)
                     const tspan1 = document.createElementNS("http://www.w3.org/2000/svg","tspan");
                     tspan1.textContent = line1;
                     tspan1.setAttribute("x", sec.x + child.x + child.w/2);
@@ -1122,7 +1111,6 @@ function generateChart(data, total) {
                     tspan1.setAttribute("class", "node-text");
                     t.appendChild(tspan1);
 
-                    // Line 2 (Middle)
                     const tspan2 = document.createElementNS("http://www.w3.org/2000/svg","tspan");
                     tspan2.textContent = line2;
                     tspan2.setAttribute("x", sec.x + child.x + child.w/2);
@@ -1130,7 +1118,6 @@ function generateChart(data, total) {
                     tspan2.setAttribute("class", "node-text");
                     t.appendChild(tspan2);
 
-                    // Line 3 (Percentage - Bottom)
                     const pctSpan = document.createElementNS("http://www.w3.org/2000/svg","tspan");
                     pctSpan.textContent = ((child.value/total)*100).toFixed(1)+'%';
                     pctSpan.setAttribute("class","node-percent");
@@ -1139,55 +1126,75 @@ function generateChart(data, total) {
                     pctSpan.setAttribute("dy", "1.2em");
                     t.appendChild(pctSpan);
 
-                    t.setAttribute("y", centerY); // Anchor point
+                    t.setAttribute("y", centerY);
+                    g.appendChild(t);
 
                 } else {
-                    // *** SINGLE LINE MODE (Fallback) ***
-                    // Calculate Font
+                    // *** SINGLE LINE MODE ***
+                    // 1. Calculate Font
                     const fsSingleW = getFontSizeForWidth(text, boxW * 0.9);
-                    const fsSingleH = boxH * 0.6; // Allow room for % if possible
+                    const fsSingleH = boxH * 0.6;
                     let fsSingle = Math.min(fsSingleW, fsSingleH);
 
-                    // Apply Floor
+                    // 2. Apply Floor
                     if (fsSingle < FLOOR) fsSingle = FLOOR;
-                    t.setAttribute("font-size", fsSingle);
-
-                    // Truncation Logic
+                    
+                    // 3. Logic: Does the WHOLE word fit?
+                    // Approx char capacity at this font size
                     const maxChars = Math.floor(boxW / (fsSingle * 0.6));
-                    const displayText = text.length > maxChars ? text.substring(0, Math.max(0, maxChars-2)) + ".." : text;
-
-                    // Percentage Logic (Only if vertical room exists)
-                    // We need boxHeight > 2.2 * fontSize (Line + Gap + Percent)
-                    const showPercent = boxH > (fsSingle * 2.2);
-
-                    const tspan = document.createElementNS("http://www.w3.org/2000/svg","tspan");
-                    tspan.textContent = displayText;
-                    tspan.setAttribute("class", "node-text");
-                    t.appendChild(tspan);
-
-                    if (showPercent) {
-                        // Position: Shift Name UP, Percent DOWN
-                        t.setAttribute("y", sec.y + child.y + child.h/2 - (fsSingle * 0.2));
-                        
-                        const pctSpan = document.createElementNS("http://www.w3.org/2000/svg","tspan");
-                        pctSpan.textContent = ((child.value/total)*100).toFixed(1)+'%';
-                        pctSpan.setAttribute("class","node-percent");
-                        pctSpan.setAttribute("font-size", fsSingle * 0.85);
-                        pctSpan.setAttribute("x", sec.x + child.x + child.w/2);
-                        pctSpan.setAttribute("dy", "1.2em");
-                        t.appendChild(pctSpan);
+                    
+                    let finalText = "";
+                    
+                    if (text.length <= maxChars) {
+                        // RULE 2: Whole word fits -> Print it (Even if it's "Tea")
+                        finalText = text;
                     } else {
-                        // Position: Center Name Perfectly
-                        t.setAttribute("y", sec.y + child.y + child.h/2 + (fsSingle * 0.3));
+                        // Truncation needed.
+                        // RULE 3: Truncated text must be >= 6 chars long
+                        // We reserve 2 chars for ".."
+                        const visibleChars = maxChars - 2;
+                        
+                        if (visibleChars >= 6) {
+                            finalText = text.substring(0, visibleChars) + "..";
+                        } else {
+                            // Does not meet threshold (e.g., would result in "Medic..")
+                            // Draw nothing.
+                            finalText = "";
+                        }
+                    }
+
+                    if (finalText !== "") {
+                        t.setAttribute("font-size", fsSingle);
+                        
+                        const showPercent = boxH > (fsSingle * 2.2);
+
+                        const tspan = document.createElementNS("http://www.w3.org/2000/svg","tspan");
+                        tspan.textContent = finalText;
+                        tspan.setAttribute("class", "node-text");
+                        t.appendChild(tspan);
+
+                        if (showPercent) {
+                            t.setAttribute("y", sec.y + child.y + child.h/2 - (fsSingle * 0.2));
+                            const pctSpan = document.createElementNS("http://www.w3.org/2000/svg","tspan");
+                            pctSpan.textContent = ((child.value/total)*100).toFixed(1)+'%';
+                            pctSpan.setAttribute("class","node-percent");
+                            pctSpan.setAttribute("font-size", fsSingle * 0.85);
+                            pctSpan.setAttribute("x", sec.x + child.x + child.w/2);
+                            pctSpan.setAttribute("dy", "1.2em");
+                            t.appendChild(pctSpan);
+                        } else {
+                            t.setAttribute("y", sec.y + child.y + child.h/2 + (fsSingle * 0.3));
+                        }
+                        
+                        g.appendChild(t);
                     }
                 }
-
-                g.appendChild(t);
             }
         });
         svg.appendChild(g);
     });
 }
+    
 function highlight(id) { document.querySelectorAll('.section-group').forEach(g => g.style.opacity = '0.1'); document.getElementById(`g-${id}`).style.opacity = '1'; }
 function resetHighlight() { document.querySelectorAll('.section-group').forEach(g => g.style.opacity = '1'); }
 
