@@ -1050,17 +1050,18 @@ function generateChart(data, total) {
             r.onmousemove=(e)=>showTooltip(e,child,total,sec.name); r.onmouseleave=hideTooltip;
             g.appendChild(r);
 
-            // --- TEXT LAYOUT ENGINE v3 (Hybrid Stack) ---
+            // --- TEXT LAYOUT ENGINE v4 (Capped & Tuned) ---
             
-            // SIZE THRESHOLD (Prevent "Slivers")
             if(child.w > 35 && child.h > 20) {
                 
                 const boxW = child.w;
                 const boxH = child.h;
                 const text = child.name;
-                const FLOOR = 10; // UPDATED: Lowered to 10px
+                
+                // CONSTANTS
+                const FLOOR = 10; 
+                const MAX_FONT = 30; // NEW: Cap font size to prevent "Obnoxious" text
 
-                // Helper: Estimate font size
                 const getFontSizeForWidth = (str, availableWidth) => {
                     return availableWidth / (str.length * 0.6);
                 };
@@ -1073,75 +1074,74 @@ function generateChart(data, total) {
                     const w1 = text.substring(0, firstSpace);
                     const w2 = text.substring(firstSpace + 1);
 
-                    // 1. Calculate Font based on FIRST WORD fitting width
-                    // We allow first word to take up 90% of width
                     const fsStackW = getFontSizeForWidth(w1, boxW * 0.9);
-                    
-                    // 2. Calculate Height (Need ~3.5 lines: Word1 + Word2 + %)
                     const fsStackH = boxH / 3.5;
                     
-                    const fsStack = Math.min(fsStackW, fsStackH);
+                    // Apply Cap (Math.min with MAX_FONT)
+                    let fsStack = Math.min(fsStackW, fsStackH, MAX_FONT);
 
-                    // CHECK: Can we respect the FLOOR?
                     if (fsStack >= FLOOR) {
-                        rendered = true;
-                        
-                        // Line 2 Calculation
-                        // At this font size, how many chars fit?
+                        // Determine Line 2 content
                         const maxChars = Math.floor((boxW * 0.9) / (fsStack * 0.6));
                         let line2Text = w2;
-                        
-                        // Truncate Line 2 if needed
-                        // RULE: NO strict limit on Line 2 length ("Carpe.." is fine)
+                        let validStack = true;
+
                         if (w2.length > maxChars) {
+                            // Truncation required
                             const avail = Math.max(0, maxChars - 2);
-                            line2Text = w2.substring(0, avail) + "..";
+                            
+                            // RULE: "T.." is fine (avail=1), but ".." is bad (avail=0)
+                            if (avail < 1) {
+                                validStack = false; 
+                            } else {
+                                line2Text = w2.substring(0, avail) + "..";
+                            }
                         }
 
-                        const t = document.createElementNS("http://www.w3.org/2000/svg","text");
-                        t.setAttribute("x", sec.x + child.x + child.w/2);
-                        t.setAttribute("y", sec.y + child.y + child.h/2);
-                        t.setAttribute("text-anchor", "middle"); 
-                        t.setAttribute("pointer-events", "none");
-                        t.setAttribute("font-size", fsStack);
+                        if (validStack) {
+                            rendered = true;
+                            
+                            const t = document.createElementNS("http://www.w3.org/2000/svg","text");
+                            t.setAttribute("x", sec.x + child.x + child.w/2);
+                            t.setAttribute("y", sec.y + child.y + child.h/2);
+                            t.setAttribute("text-anchor", "middle"); 
+                            t.setAttribute("pointer-events", "none");
+                            t.setAttribute("font-size", fsStack);
 
-                        // Line 1 (First Word - Full)
-                        const tspan1 = document.createElementNS("http://www.w3.org/2000/svg","tspan");
-                        tspan1.textContent = w1;
-                        tspan1.setAttribute("x", sec.x + child.x + child.w/2);
-                        tspan1.setAttribute("dy", "-0.6em"); 
-                        tspan1.setAttribute("class", "node-text");
-                        t.appendChild(tspan1);
+                            const tspan1 = document.createElementNS("http://www.w3.org/2000/svg","tspan");
+                            tspan1.textContent = w1;
+                            tspan1.setAttribute("x", sec.x + child.x + child.w/2);
+                            tspan1.setAttribute("dy", "-0.6em"); 
+                            tspan1.setAttribute("class", "node-text");
+                            t.appendChild(tspan1);
 
-                        // Line 2 (Remainder - Truncated if needed)
-                        const tspan2 = document.createElementNS("http://www.w3.org/2000/svg","tspan");
-                        tspan2.textContent = line2Text;
-                        tspan2.setAttribute("x", sec.x + child.x + child.w/2);
-                        tspan2.setAttribute("dy", "1.1em"); 
-                        tspan2.setAttribute("class", "node-text");
-                        t.appendChild(tspan2);
+                            const tspan2 = document.createElementNS("http://www.w3.org/2000/svg","tspan");
+                            tspan2.textContent = line2Text;
+                            tspan2.setAttribute("x", sec.x + child.x + child.w/2);
+                            tspan2.setAttribute("dy", "1.1em"); 
+                            tspan2.setAttribute("class", "node-text");
+                            t.appendChild(tspan2);
 
-                        // Percentage
-                        const pctSpan = document.createElementNS("http://www.w3.org/2000/svg","tspan");
-                        pctSpan.textContent = ((child.value/total)*100).toFixed(1)+'%';
-                        pctSpan.setAttribute("class","node-percent");
-                        pctSpan.setAttribute("font-size", fsStack * 0.85);
-                        pctSpan.setAttribute("x", sec.x + child.x + child.w/2);
-                        pctSpan.setAttribute("dy", "1.2em");
-                        t.appendChild(pctSpan);
+                            const pctSpan = document.createElementNS("http://www.w3.org/2000/svg","tspan");
+                            pctSpan.textContent = ((child.value/total)*100).toFixed(1)+'%';
+                            pctSpan.setAttribute("class","node-percent");
+                            pctSpan.setAttribute("font-size", fsStack * 0.85);
+                            pctSpan.setAttribute("x", sec.x + child.x + child.w/2);
+                            pctSpan.setAttribute("dy", "1.2em");
+                            t.appendChild(pctSpan);
 
-                        g.appendChild(t);
+                            g.appendChild(t);
+                        }
                     }
                 }
 
                 // --- STRATEGY 2: SINGLE LINE FALLBACK ---
-                // Used if:
-                // A) One word only
-                // B) First word was too long to stack (e.g. "Telecommunications")
                 if (!rendered) {
                     const fsSingleW = getFontSizeForWidth(text, boxW * 0.9);
                     const fsSingleH = boxH * 0.6;
-                    let fsSingle = Math.min(fsSingleW, fsSingleH);
+                    
+                    // Apply Cap
+                    let fsSingle = Math.min(fsSingleW, fsSingleH, MAX_FONT);
 
                     if (fsSingle < FLOOR) fsSingle = FLOOR;
                     
@@ -1149,14 +1149,13 @@ function generateChart(data, total) {
                     let finalText = "";
                     
                     if (text.length <= maxChars) {
-                        finalText = text; // Whole word fits
+                        finalText = text; 
                     } else {
-                        // STRICT RULE: Truncation must be >= 6 chars for single lines
+                        // Strict 6-char rule for single lines
                         const visibleChars = maxChars - 2;
                         if (visibleChars >= 6) {
                             finalText = text.substring(0, visibleChars) + "..";
                         }
-                        // Else: Empty string (Don't print "P..")
                     }
 
                     if (finalText !== "") {
