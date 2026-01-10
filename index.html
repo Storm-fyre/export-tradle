@@ -895,48 +895,31 @@ function processData(countryData) {
             id: s.id,
             name: s.jsonName,
             color: s.color,
-            totalValue: countryData.sections[s.jsonName] || 0, // Get the total size of the section from JSON
+            totalValue: countryData.sections[s.jsonName] || 0, 
             children: []
         };
     });
 
-    // 2. Distribute products into sections based on JSON 'sections' keys would be hard 
-    // because products list is flat. 
-    // Strategy: We iterate top_products. For each product, we find which Section it belongs to 
-    // by using the HS Code -> Chapter -> Section mapping logic.
-    
+    // 2. Distribute products into sections
     const topProducts = countryData.top_products || [];
     
+    // --- SET THRESHOLD: 0.05% (0.0005) ---
+    const threshold = totalExports * 0.0005; 
+    
     topProducts.forEach(prod => {
-        const hsCode = prod.hs4_id.toString().padStart(4, '0'); // e.g. "0101" or "52709" -> "52709" is bad. 
-        // NOTE: The JSON example showed hs4_id as integer: 52709. 
-        // Standard HS4 is 4 digits. OEC sometimes returns 6 digits ID for HS4 (e.g. 52709 = 2709).
-        // Let's use the code logic that OEC uses: 
-        // HS4 ID usually: section 104707 -> Chapter 47. 
-        // 52709 -> Chapter 27.
-        // Logic: if id > 99999, first 3 digits? No.
-        // Simpler: The last 4 digits are the HS4 code. The digits before that are usually the Chapter or internal ID.
-        // Actually, looking at your data: 52709. 2709 is Crude Oil. So 5 is just a prefix?
-        // 147108 -> 7108 Gold. 14 is prefix.
-        
-        // Let's try to map the PRODUCT to the SECTION by using the SECTION MAPPING LOGIC.
-        // We need to parse the Chapter.
-        // In OEC Tesseract IDs: usually the last 2 digits of the string BEFORE the last 2 digits.
-        // Example: 52709. Last 2 digits = 09 (position). Digits before = 527. 27 is chapter.
-        // Example: 147108. Last 2 = 08. Digits before = 1471. 71 is chapter.
-        
+        // --- FILTER: Ignore products smaller than 0.05% ---
+        if (prod.value < threshold) return;
+
         let hsString = prod.hs4_id.toString();
         let chapter;
         
-        // Robust HS Chapter extraction from OEC IDs
+        // Robust HS Chapter extraction from OEC IDs (e.g., 52709 -> 27, 147108 -> 71)
         if (hsString.length === 5) {
-            // e.g. 52709 -> 27
             chapter = parseInt(hsString.substring(1, 3));
         } else if (hsString.length === 6) {
-            // e.g. 147108 -> 71
             chapter = parseInt(hsString.substring(2, 4));
         } else {
-            // Fallback or short code
+            // Fallback for standard 4-digit codes or other formats
              chapter = parseInt(hsString.substring(0, hsString.length - 2));
         }
 
@@ -968,16 +951,17 @@ function processData(countryData) {
     Object.values(sectionMap).forEach(sec => {
         if (sec.totalValue <= 0 && sec.children.length === 0) return;
 
-        // Calculate size of "Other" (products not in top list)
+        // Calculate size of "Other" (products not in top list or filtered out by threshold)
         const childrenSum = sec.children.reduce((acc, c) => acc + c.value, 0);
         let otherValue = sec.totalValue - childrenSum;
         
-        // Sanity check: sometimes filtered products might sum more due to data inconsistencies, though unlikely with this JSON
         if (otherValue < 0) otherValue = 0;
 
         // Prepare children array
         const children = [...sec.children];
-        if (otherValue > 0) {
+        
+        // Only add "Other" box if it's significant (also using a small visual threshold of 0.01% for the 'Other' box itself)
+        if (otherValue > (totalExports * 0.0001)) {
             children.push({
                 name: "Other " + sec.name,
                 value: otherValue,
