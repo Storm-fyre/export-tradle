@@ -1058,10 +1058,10 @@ function generateChart(data, total) {
                 const boxH = child.h;
                 const text = child.name;
                 
-                // --- UPDATED CONSTANTS ---
-                const FLOOR = 9;         // Lowered from 10
+                // CONSTANTS
+                const FLOOR = 10; 
                 const MAX_FONT = 40; 
-                const CHAR_CONST = 0.50; // Lowered from 0.55 (Tighter fit)
+                const CHAR_CONST = 0.55; 
 
                 const getFontSizeForWidth = (str, availableWidth) => {
                     return availableWidth / (str.length * CHAR_CONST);
@@ -1081,7 +1081,8 @@ function generateChart(data, total) {
                     let fsStack = Math.min(fsStackW, fsStackH, MAX_FONT);
 
                     if (fsStack >= FLOOR) {
-                        const maxChars = Math.floor((boxW * 0.9) / (fsStack * CHAR_CONST));
+                        // FIX: Added +0.1 buffer to prevent 4.99 flooring to 4
+                        const maxChars = Math.floor(((boxW * 0.9) / (fsStack * CHAR_CONST)) + 0.1);
                         let line2Text = w2;
                         let validStack = true;
 
@@ -1134,22 +1135,21 @@ function generateChart(data, total) {
                 // --- STRATEGY 2: SINGLE LINE FALLBACK ---
                 if (!rendered) {
                     const fsSingleW = getFontSizeForWidth(text, boxW * 0.9);
-                    
-                    // Height allowance 70%
                     const fsSingleH = boxH * 0.7; 
                     
                     let fsSingle = Math.min(fsSingleW, fsSingleH, MAX_FONT);
 
                     if (fsSingle < FLOOR) fsSingle = FLOOR;
                     
-                    const maxChars = Math.floor((boxW * 0.9) / (fsSingle * CHAR_CONST));
+                    // FIX: Added +0.1 buffer here as well
+                    const maxChars = Math.floor(((boxW * 0.9) / (fsSingle * CHAR_CONST)) + 0.1);
                     let finalText = "";
                     
                     if (text.length <= maxChars) {
                         finalText = text; 
                     } else {
                         const visibleChars = maxChars - 2;
-                        // KEPT AS IS: Requires 6 chars to truncate
+                        // Threshold kept at 6 as requested
                         if (visibleChars >= 6) {
                             finalText = text.substring(0, visibleChars) + "..";
                         }
@@ -1162,7 +1162,6 @@ function generateChart(data, total) {
                         t.setAttribute("pointer-events", "none");
                         t.setAttribute("font-size", fsSingle);
                         
-                        // Dynamic Percentage Logic
                         const showPercent = boxH > (fsSingle * 2.2);
 
                         const tspan = document.createElementNS("http://www.w3.org/2000/svg","tspan");
@@ -1180,7 +1179,6 @@ function generateChart(data, total) {
                             pctSpan.setAttribute("dy", "1.2em");
                             t.appendChild(pctSpan);
                         } else {
-                            // Centered perfectly if no percentage
                             t.setAttribute("y", sec.y + child.y + child.h/2 + (fsSingle * 0.3));
                         }
                         g.appendChild(t);
