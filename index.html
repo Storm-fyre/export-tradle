@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tradle: Daily Export Guessing Game</title>
     <style>
-        /* --- CSS STYLES --- */
+        /* --- CSS STYLES (UNCHANGED) --- */
 
         /* Reset & Base */
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f7f9; margin: 0; padding: 0.5rem; color: #333; }
@@ -269,74 +269,230 @@
 let DISTANCES = {};
 let DIRECTIONS = {};
 let EXPORTS_DATA = {};
+let HS4_MAP = {};
+let SECTIONS_DICT = {};
 
 // --- CONFIGURATION ---
-// Updated to match your JSON keys ("jsonName")
+// Maps Section ID (numeric) to Color and HS Chapters. Names are loaded from sections.json
 const SECTION_MAPPING = [
-    { id: 1, jsonName: "Live Animals and Animal Products", color: "#F0E68C", chapters: [1,2,3,4,5] },
-    { id: 2, jsonName: "Vegetable Products(Crops)", color: "#FDC02F", chapters: [6,7,8,9,10,11,12,13,14] },
-    { id: 3, jsonName: "Animal or Vegetable Fats and Oils", color: "#E89736", chapters: [15] },
-    { id: 4, jsonName: "Processed Food, Tobacco and Drinks", color: "#E4772E", chapters: [16,17,18,19,20,21,22,23,24] },
-    { id: 5, jsonName: "Minerals, Ores & Fuels", color: "#6C4F3E", chapters: [25,26,27] },
-    { id: 6, jsonName: "Pharma, Chemical and Allied Industries", color: "#CF4E96", chapters: [28,29,30,31,32,33,34,35,36,37,38] },
-    { id: 7, jsonName: "Plastics & Rubbers", color: "#954492", chapters: [39,40] },
-    { id: 8, jsonName: "Leathers, Furs and Bags", color: "#B3C148", chapters: [41,42,43] },
-    { id: 9, jsonName: "Wood, Cork and Straw Articles", color: "#5AA453", chapters: [44,45,46] },
-    { id: 10, jsonName: "Paper, Pulp and Printed Materials", color: "#3B7D41", chapters: [47,48,49] },
-    { id: 11, jsonName: "Textiles", color: "#3D9896", chapters: Array.from({length:14},(_,i)=>i+50) },
-    { id: 12, jsonName: "Footwear & Headgear", color: "#326C74", chapters: [64,65,66,67] },
-    { id: 13, jsonName: "Stone, Glass and Ceramics", color: "#925255", chapters: [68,69,70] },
-    { id: 14, jsonName: "Precious Stones & Metals", color: "#B82F3B", chapters: [71] },
-    { id: 15, jsonName: "Metals", color: "#D15438", chapters: Array.from({length:12},(_,i)=>i+72) },
-    { id: 16, jsonName: "Electronics & Machinery", color: "#42A5F5", chapters: [84,85] },
-    { id: 17, jsonName: "Transport", color: "#1976D2", chapters: [86,87,88,89] },
-    { id: 18, jsonName: "Precision Instruments", color: "#1565C0", chapters: [90,91,92] },
-    { id: 19, jsonName: "Arms & Ammunitions", color: "#546E7A", chapters: [93] },
-    { id: 20, jsonName: "Furniture, Toys & Misc", color: "#8D8D8D", chapters: [94,95,96] },
-    { id: 21, jsonName: "Arts & Antiques", color: "#616161", chapters: [97,98,99] },
-    { id: 22, jsonName: "Unspecified", color: "#A9A9A9", chapters: [] }
+    { id: 1, color: "#F0E68C", chapters: [1,2,3,4,5] },
+    { id: 2, color: "#FDC02F", chapters: [6,7,8,9,10,11,12,13,14] },
+    { id: 3, color: "#E89736", chapters: [15] },
+    { id: 4, color: "#E4772E", chapters: [16,17,18,19,20,21,22,23,24] },
+    { id: 5, color: "#6C4F3E", chapters: [25,26,27] },
+    { id: 6, color: "#CF4E96", chapters: [28,29,30,31,32,33,34,35,36,37,38] },
+    { id: 7, color: "#954492", chapters: [39,40] },
+    { id: 8, color: "#B3C148", chapters: [41,42,43] },
+    { id: 9, color: "#5AA453", chapters: [44,45,46] },
+    { id: 10, color: "#3B7D41", chapters: [47,48,49] },
+    { id: 11, color: "#3D9896", chapters: Array.from({length:14},(_,i)=>i+50) },
+    { id: 12, color: "#326C74", chapters: [64,65,66,67] },
+    { id: 13, color: "#925255", chapters: [68,69,70] },
+    { id: 14, color: "#B82F3B", chapters: [71] },
+    { id: 15, color: "#D15438", chapters: Array.from({length:12},(_,i)=>i+72) },
+    { id: 16, color: "#42A5F5", chapters: [84,85] },
+    { id: 17, color: "#1976D2", chapters: [86,87,88,89] },
+    { id: 18, color: "#1565C0", chapters: [90,91,92] },
+    { id: 19, color: "#546E7A", chapters: [93] },
+    { id: 20, color: "#8D8D8D", chapters: [94,95,96] },
+    { id: 21, color: "#616161", chapters: [97,98,99] },
+    { id: 22, color: "#A9A9A9", chapters: [] }
 ];
 
+// Updated to use ISO 3-letter codes as IDs to match new JSON metadata
 const COUNTRIES = [
-  { "name": "United States", "id": "nausa" }, { "name": "China", "id": "aschn" }, { "name": "Germany", "id": "eudeu" }, { "name": "Japan", "id": "asjpn" }, { "name": "India", "id": "asind" },
-  { "name": "United Kingdom", "id": "eugbr" }, { "name": "France", "id": "eufra" }, { "name": "Brazil", "id": "sabra" }, { "name": "Italy", "id": "euita" }, { "name": "Canada", "id": "nacan" },
-  { "name": "Russia", "id": "eurus" }, { "name": "Mexico", "id": "namex" }, { "name": "Australia", "id": "ocaus" }, { "name": "South Korea", "id": "askor" }, { "name": "Spain", "id": "euesp" },
-  { "name": "Indonesia", "id": "asidn" }, { "name": "Saudi Arabia", "id": "assau" }, { "name": "Turkey", "id": "astur" }, { "name": "Netherlands", "id": "eunld" }, { "name": "Switzerland", "id": "euche" },
-  { "name": "Poland", "id": "eupol" }, { "name": "Argentina", "id": "saarg" }, { "name": "Belgium", "id": "eubel" }, { "name": "Sweden", "id": "euswe" }, { "name": "Ireland", "id": "euirl" },
-  { "name": "Austria", "id": "euaut" }, { "name": "Thailand", "id": "astha" }, { "name": "United Arab Emirates", "id": "asare" }, { "name": "Singapore", "id": "assgp" }, { "name": "Norway", "id": "eunor" },
-  { "name": "Israel", "id": "asisr" }, { "name": "Vietnam", "id": "asvnm" }, { "name": "Philippines", "id": "asphl" }, { "name": "Bangladesh", "id": "asbgd" }, { "name": "Iran", "id": "asirn" },
-  { "name": "Malaysia", "id": "asmys" }, { "name": "Denmark", "id": "eudnk" }, { "name": "Colombia", "id": "sacol" }, { "name": "South Africa", "id": "afzaf" }, { "name": "Romania", "id": "eurou" },
-  { "name": "Egypt", "id": "afegy" }, { "name": "Pakistan", "id": "aspak" }, { "name": "Chile", "id": "sachl" }, { "name": "Czech Republic", "id": "eucze" }, { "name": "Finland", "id": "eufin" },
-  { "name": "Portugal", "id": "euprt" }, { "name": "Kazakhstan", "id": "askaz" }, { "name": "Peru", "id": "saper" }, { "name": "Algeria", "id": "afdza" }, { "name": "Iraq", "id": "asirq" },
-  { "name": "Nigeria", "id": "afnga" }, { "name": "Hungary", "id": "euhun" }, { "name": "New Zealand", "id": "ocnzl" }, { "name": "Greece", "id": "eugrc" }, { "name": "Qatar", "id": "asqat" },
-  { "name": "Kuwait", "id": "askwt" }, { "name": "Ukraine", "id": "euukr" }, { "name": "Morocco", "id": "afmar" }, { "name": "Ethiopia", "id": "afeth" }, { "name": "Slovakia", "id": "eusvk" },
-  { "name": "Ecuador", "id": "saecu" }, { "name": "Dominican Republic", "id": "nadom" }, { "name": "Sri Lanka", "id": "aslka" }, { "name": "Guatemala", "id": "nagtm" }, { "name": "Oman", "id": "asomn" },
-  { "name": "Cuba", "id": "nacub" }, { "name": "Bulgaria", "id": "eubgr" }, { "name": "Venezuela", "id": "saven" }, { "name": "Kenya", "id": "afken" }, { "name": "Uzbekistan", "id": "asuzb" },
-  { "name": "Angola", "id": "afago" }, { "name": "Costa Rica", "id": "nacri" }, { "name": "Luxembourg", "id": "eulux" }, { "name": "Croatia", "id": "euhrv" }, { "name": "Panama", "id": "napan" },
-  { "name": "Cote d'Ivoire", "id": "afciv" }, { "name": "Uruguay", "id": "saury" }, { "name": "Turkmenistan", "id": "astkm" }, { "name": "Serbia", "id": "eusrb" }, { "name": "Lithuania", "id": "eultu" },
-  { "name": "Tanzania", "id": "aftza" }, { "name": "Azerbaijan", "id": "asaze" }, { "name": "Ghana", "id": "afgha" }, { "name": "Slovenia", "id": "eusvn" }, { "name": "Belarus", "id": "eublr" },
-  { "name": "Congo (Dem. Rep.)", "id": "afcod" }, { "name": "Myanmar", "id": "asmmr" }, { "name": "Uganda", "id": "afuga" }, { "name": "Tunisia", "id": "aftun" }, { "name": "Jordan", "id": "asjor" },
-  { "name": "Cameroon", "id": "afcmr" }, { "name": "Bolivia", "id": "sabol" }, { "name": "Paraguay", "id": "sapry" }, { "name": "Libya", "id": "aflby" }, { "name": "Bahrain", "id": "asbhr" },
-  { "name": "Latvia", "id": "eulva" }, { "name": "Nepal", "id": "asnpl" }, { "name": "Estonia", "id": "euest" }, { "name": "North Korea", "id": "askpr" }, { "name": "Sudan", "id": "afsdn" },
-  { "name": "El Salvador", "id": "naslv" }, { "name": "Honduras", "id": "nahnd" }, { "name": "Papua New Guinea", "id": "ocpng" }, { "name": "Cyprus", "id": "eucyp" }, { "name": "Cambodia", "id": "askhm" },
-  { "name": "Zambia", "id": "afzmb" }, { "name": "Iceland", "id": "euisl" }, { "name": "Senegal", "id": "afsen" }, { "name": "Trinidad and Tobago", "id": "natto" }, { "name": "Zimbabwe", "id": "afzwe" },
-  { "name": "Bosnia and Herzegovina", "id": "eubih" }, { "name": "Georgia", "id": "asgeo" }, { "name": "Guinea", "id": "afgin" }, { "name": "Lebanon", "id": "aslbn" }, { "name": "Haiti", "id": "nahti" },
-  { "name": "Gabon", "id": "afgab" }, { "name": "Armenia", "id": "asarm" }, { "name": "Burkina Faso", "id": "afbfa" }, { "name": "Mali", "id": "afmli" }, { "name": "Mozambique", "id": "afmoz" },
-  { "name": "Palestine", "id": "aspse" }, { "name": "Albania", "id": "eualb" }, { "name": "Botswana", "id": "afbwa" }, { "name": "Malta", "id": "eumlt" }, { "name": "Benin", "id": "afben" },
-  { "name": "Syria", "id": "assyr" }, { "name": "Mongolia", "id": "asmng" }, { "name": "Equatorial Guinea", "id": "afgnq" }, { "name": "Guyana", "id": "saguy" }, { "name": "Madagascar", "id": "afmdg" },
-  { "name": "Nicaragua", "id": "nanic" }, { "name": "Niger", "id": "afner" }, { "name": "Jamaica", "id": "najam" }, { "name": "Laos", "id": "aslao" }, { "name": "Moldova", "id": "eumda" },
-  { "name": "Congo (Republic)", "id": "afcog" }, { "name": "North Macedonia", "id": "eumkd" }, { "name": "Rwanda", "id": "afrwa" }, { "name": "Namibia", "id": "afnam" }, { "name": "Afghanistan", "id": "asafg" },
-  { "name": "Bahamas", "id": "nabhs" }, { "name": "Chad", "id": "aftcd" }, { "name": "Malawi", "id": "afmwi" }, { "name": "Monaco", "id": "eumco" }, { "name": "Brunei", "id": "asbrn" },
-  { "name": "Mauritius", "id": "afmus" }, { "name": "Tajikistan", "id": "astjk" }, { "name": "Kyrgyzstan", "id": "askgz" }, { "name": "Mauritania", "id": "afmrt" }, { "name": "Somalia", "id": "afsom" },
-  { "name": "Togo", "id": "aftgo" }, { "name": "Liechtenstein", "id": "eulie" }, { "name": "Yemen", "id": "asyem" }, { "name": "Maldives", "id": "asmdv" }, { "name": "Barbados", "id": "nabrb" },
-  { "name": "South Sudan", "id": "afssd" }, { "name": "Montenegro", "id": "eumne" }, { "name": "Fiji", "id": "ocfji" }, { "name": "Eswatini", "id": "afswz" }, { "name": "Liberia", "id": "aflbr" },
-  { "name": "Sierra Leone", "id": "afsle" }, { "name": "Djibouti", "id": "afdji" }, { "name": "Andorra", "id": "euand" }, { "name": "Suriname", "id": "sasur" }, { "name": "Burundi", "id": "afbdi" },
-  { "name": "Timor-Leste", "id": "astls" }, { "name": "Bhutan", "id": "asbtn" }, { "name": "Central African Republic", "id": "afcaf" }, { "name": "Belize", "id": "nablz" }, { "name": "Gambia", "id": "afgmb" },
-  { "name": "Eritrea", "id": "aferi" }, { "name": "Saint Lucia", "id": "nalca" }, { "name": "Cape Verde", "id": "afcpv" }, { "name": "Antigua and Barbuda", "id": "naatg" }, { "name": "Seychelles", "id": "afsyc" },
-  { "name": "Guinea-Bissau", "id": "afgnb" }, { "name": "Solomon Islands", "id": "ocslb" }, { "name": "San Marino", "id": "eusmr" }, { "name": "Lesotho", "id": "aflso" }, { "name": "Comoros", "id": "afcom" },
-  { "name": "Saint Kitts and Nevis", "id": "nakna" }, { "name": "Vanuatu", "id": "ocvut" }, { "name": "Saint Vincent and the Grenadines", "id": "navct" }, { "name": "Samoa", "id": "ocwsm" },
-  { "name": "Sao Tome and Principe", "id": "afstp" }, { "name": "Dominica", "id": "nadma" }, { "name": "Grenada", "id": "nagrd" }, { "name": "Micronesia", "id": "ocfsm" }, { "name": "Tonga", "id": "octon" },
-  { "name": "Marshall Islands", "id": "ocmhl" }, { "name": "Palau", "id": "ocplw" }, { "name": "Kiribati", "id": "ockir" }, { "name": "Nauru", "id": "ocnru" }, { "name": "Tuvalu", "id": "octuv" }
+  { "name": "United States", "id": "USA" },
+  { "name": "China", "id": "CHN" },
+  { "name": "Germany", "id": "DEU" },
+  { "name": "Japan", "id": "JPN" },
+  { "name": "India", "id": "IND" },
+  { "name": "United Kingdom", "id": "GBR" },
+  { "name": "France", "id": "FRA" },
+  { "name": "Brazil", "id": "BRA" },
+  { "name": "Italy", "id": "ITA" },
+  { "name": "Canada", "id": "CAN" },
+  { "name": "Russia", "id": "RUS" },
+  { "name": "Mexico", "id": "MEX" },
+  { "name": "Australia", "id": "AUS" },
+  { "name": "South Korea", "id": "KOR" },
+  { "name": "Spain", "id": "ESP" },
+  { "name": "Indonesia", "id": "IDN" },
+  { "name": "Saudi Arabia", "id": "SAU" },
+  { "name": "Turkey", "id": "TUR" },
+  { "name": "Netherlands", "id": "NLD" },
+  { "name": "Switzerland", "id": "CHE" },
+  { "name": "Poland", "id": "POL" },
+  { "name": "Argentina", "id": "ARG" },
+  { "name": "Belgium", "id": "BEL" },
+  { "name": "Sweden", "id": "SWE" },
+  { "name": "Ireland", "id": "IRL" },
+  { "name": "Austria", "id": "AUT" },
+  { "name": "Thailand", "id": "THA" },
+  { "name": "United Arab Emirates", "id": "ARE" },
+  { "name": "Singapore", "id": "SGP" },
+  { "name": "Norway", "id": "NOR" },
+  { "name": "Israel", "id": "ISR" },
+  { "name": "Vietnam", "id": "VNM" },
+  { "name": "Philippines", "id": "PHL" },
+  { "name": "Bangladesh", "id": "BGD" },
+  { "name": "Iran", "id": "IRN" },
+  { "name": "Malaysia", "id": "MYS" },
+  { "name": "Denmark", "id": "DNK" },
+  { "name": "Colombia", "id": "COL" },
+  { "name": "South Africa", "id": "ZAF" },
+  { "name": "Romania", "id": "ROU" },
+  { "name": "Egypt", "id": "EGY" },
+  { "name": "Pakistan", "id": "PAK" },
+  { "name": "Chile", "id": "CHL" },
+  { "name": "Czech Republic", "id": "CZE" },
+  { "name": "Finland", "id": "FIN" },
+  { "name": "Portugal", "id": "PRT" },
+  { "name": "Kazakhstan", "id": "KAZ" },
+  { "name": "Peru", "id": "PER" },
+  { "name": "Algeria", "id": "DZA" },
+  { "name": "Iraq", "id": "IRQ" },
+  { "name": "Nigeria", "id": "NGA" },
+  { "name": "Hungary", "id": "HUN" },
+  { "name": "New Zealand", "id": "NZL" },
+  { "name": "Greece", "id": "GRC" },
+  { "name": "Qatar", "id": "QAT" },
+  { "name": "Kuwait", "id": "KWT" },
+  { "name": "Ukraine", "id": "UKR" },
+  { "name": "Morocco", "id": "MAR" },
+  { "name": "Ethiopia", "id": "ETH" },
+  { "name": "Slovakia", "id": "SVK" },
+  { "name": "Ecuador", "id": "ECU" },
+  { "name": "Dominican Republic", "id": "DOM" },
+  { "name": "Sri Lanka", "id": "LKA" },
+  { "name": "Guatemala", "id": "GTM" },
+  { "name": "Oman", "id": "OMN" },
+  { "name": "Cuba", "id": "CUB" },
+  { "name": "Bulgaria", "id": "BGR" },
+  { "name": "Venezuela", "id": "VEN" },
+  { "name": "Kenya", "id": "KEN" },
+  { "name": "Uzbekistan", "id": "UZB" },
+  { "name": "Angola", "id": "AGO" },
+  { "name": "Costa Rica", "id": "CRI" },
+  { "name": "Luxembourg", "id": "LUX" },
+  { "name": "Croatia", "id": "HRV" },
+  { "name": "Panama", "id": "PAN" },
+  { "name": "Cote d'Ivoire", "id": "CIV" },
+  { "name": "Uruguay", "id": "URY" },
+  { "name": "Turkmenistan", "id": "TKM" },
+  { "name": "Serbia", "id": "SRB" },
+  { "name": "Lithuania", "id": "LTU" },
+  { "name": "Tanzania", "id": "TZA" },
+  { "name": "Azerbaijan", "id": "AZE" },
+  { "name": "Ghana", "id": "GHA" },
+  { "name": "Slovenia", "id": "SVN" },
+  { "name": "Belarus", "id": "BLR" },
+  { "name": "Congo (Dem. Rep.)", "id": "COD" },
+  { "name": "Myanmar", "id": "MMR" },
+  { "name": "Uganda", "id": "UGA" },
+  { "name": "Tunisia", "id": "TUN" },
+  { "name": "Jordan", "id": "JOR" },
+  { "name": "Cameroon", "id": "CMR" },
+  { "name": "Bolivia", "id": "BOL" },
+  { "name": "Paraguay", "id": "PRY" },
+  { "name": "Libya", "id": "LBY" },
+  { "name": "Bahrain", "id": "BHR" },
+  { "name": "Latvia", "id": "LVA" },
+  { "name": "Nepal", "id": "NPL" },
+  { "name": "Estonia", "id": "EST" },
+  { "name": "North Korea", "id": "PRK" },
+  { "name": "Sudan", "id": "SDN" },
+  { "name": "El Salvador", "id": "SLV" },
+  { "name": "Honduras", "id": "HND" },
+  { "name": "Papua New Guinea", "id": "PNG" },
+  { "name": "Cyprus", "id": "CYP" },
+  { "name": "Cambodia", "id": "KHM" },
+  { "name": "Zambia", "id": "ZMB" },
+  { "name": "Iceland", "id": "ISL" },
+  { "name": "Senegal", "id": "SEN" },
+  { "name": "Trinidad and Tobago", "id": "TTO" },
+  { "name": "Zimbabwe", "id": "ZWE" },
+  { "name": "Bosnia and Herzegovina", "id": "BIH" },
+  { "name": "Georgia", "id": "GEO" },
+  { "name": "Guinea", "id": "GIN" },
+  { "name": "Lebanon", "id": "LBN" },
+  { "name": "Haiti", "id": "HTI" },
+  { "name": "Gabon", "id": "GAB" },
+  { "name": "Armenia", "id": "ARM" },
+  { "name": "Burkina Faso", "id": "BFA" },
+  { "name": "Mali", "id": "MLI" },
+  { "name": "Mozambique", "id": "MOZ" },
+  { "name": "Palestine", "id": "PSE" },
+  { "name": "Albania", "id": "ALB" },
+  { "name": "Botswana", "id": "BWA" },
+  { "name": "Malta", "id": "MLT" },
+  { "name": "Benin", "id": "BEN" },
+  { "name": "Syria", "id": "SYR" },
+  { "name": "Mongolia", "id": "MNG" },
+  { "name": "Equatorial Guinea", "id": "GNQ" },
+  { "name": "Guyana", "id": "GUY" },
+  { "name": "Madagascar", "id": "MDG" },
+  { "name": "Nicaragua", "id": "NIC" },
+  { "name": "Niger", "id": "NER" },
+  { "name": "Jamaica", "id": "JAM" },
+  { "name": "Laos", "id": "LAO" },
+  { "name": "Moldova", "id": "MDA" },
+  { "name": "Congo (Republic)", "id": "COG" },
+  { "name": "North Macedonia", "id": "MKD" },
+  { "name": "Rwanda", "id": "RWA" },
+  { "name": "Namibia", "id": "NAM" },
+  { "name": "Afghanistan", "id": "AFG" },
+  { "name": "Bahamas", "id": "BHS" },
+  { "name": "Chad", "id": "TCD" },
+  { "name": "Malawi", "id": "MWI" },
+  { "name": "Brunei", "id": "BRN" },
+  { "name": "Mauritius", "id": "MUS" },
+  { "name": "Tajikistan", "id": "TJK" },
+  { "name": "Kyrgyzstan", "id": "KGZ" },
+  { "name": "Mauritania", "id": "MRT" },
+  { "name": "Somalia", "id": "SOM" },
+  { "name": "Togo", "id": "TGO" },
+  { "name": "Yemen", "id": "YEM" },
+  { "name": "Maldives", "id": "MDV" },
+  { "name": "Barbados", "id": "BRB" },
+  { "name": "South Sudan", "id": "SSD" },
+  { "name": "Montenegro", "id": "MNE" },
+  { "name": "Fiji", "id": "FJI" },
+  { "name": "Eswatini", "id": "SWZ" },
+  { "name": "Liberia", "id": "LBR" },
+  { "name": "Sierra Leone", "id": "SLE" },
+  { "name": "Djibouti", "id": "DJI" },
+  { "name": "Andorra", "id": "AND" },
+  { "name": "Suriname", "id": "SUR" },
+  { "name": "Burundi", "id": "BDI" },
+  { "name": "Timor-Leste", "id": "TLS" },
+  { "name": "Bhutan", "id": "BTN" },
+  { "name": "Central African Republic", "id": "CAF" },
+  { "name": "Belize", "id": "BLZ" },
+  { "name": "Gambia", "id": "GMB" },
+  { "name": "Eritrea", "id": "ERI" },
+  { "name": "Saint Lucia", "id": "LCA" },
+  { "name": "Cape Verde", "id": "CPV" },
+  { "name": "Antigua and Barbuda", "id": "ATG" },
+  { "name": "Seychelles", "id": "SYC" },
+  { "name": "Guinea-Bissau", "id": "GNB" },
+  { "name": "Solomon Islands", "id": "SLB" },
+  { "name": "San Marino", "id": "SMR" },
+  { "name": "Lesotho", "id": "LSO" },
+  { "name": "Comoros", "id": "COM" },
+  { "name": "Saint Kitts and Nevis", "id": "KNA" },
+  { "name": "Vanuatu", "id": "VUT" },
+  { "name": "Saint Vincent and the Grenadines", "id": "VCT" },
+  { "name": "Samoa", "id": "WSM" },
+  { "name": "Sao Tome and Principe", "id": "STP" },
+  { "name": "Dominica", "id": "DMA" },
+  { "name": "Grenada", "id": "GRD" },
+  { "name": "Micronesia", "id": "FSM" },
+  { "name": "Tonga", "id": "TON" },
+  { "name": "Marshall Islands", "id": "MHL" },
+  { "name": "Palau", "id": "PLW" },
+  { "name": "Kiribati", "id": "KIR" },
+  { "name": "Nauru", "id": "NRU" },
+  { "name": "Tuvalu", "id": "TUV" }
 ];
 
 const REVERSE_COMPASS = { "N": "S", "S": "N", "E": "W", "W": "E", "NE": "SW", "NW": "SE", "SE": "NW", "SW": "NE" };
@@ -413,23 +569,27 @@ let gameState = {
 // --- INITIALIZATION ---
 async function startApp() {
     try {
-        // Fetch all data files, including the new exports.json
-        const [distRes, dirRes, expRes] = await Promise.all([ 
+        // Updated Promise.all to fetch new optimization files
+        const [distRes, dirRes, expRes, hs4Res, secRes] = await Promise.all([ 
             fetch('distances.json'), 
             fetch('directions.json'),
-            fetch('exports.json')
+            fetch('exports.json'),
+            fetch('hs4.json'),
+            fetch('sections.json')
         ]);
         
         DISTANCES = await distRes.json();
         DIRECTIONS = await dirRes.json();
         EXPORTS_DATA = await expRes.json();
+        HS4_MAP = await hs4Res.json();
+        SECTIONS_DICT = await secRes.json();
         
         initTabs();
         updateDailyDashboard();
         renderHistory();
         startCountdown();
     } catch (err) {
-        alert("Error loading game files. Make sure distances.json, directions.json, and exports.json are in the same folder.");
+        alert("Error loading game files. Ensure distances.json, directions.json, exports.json, hs4.json, and sections.json are present.");
         console.error(err);
     }
 }
@@ -861,15 +1021,14 @@ function closeModal() { document.getElementById('action-modal').style.display = 
 document.getElementById('modal-view-btn').onclick = () => { closeModal(); if(currentModalContext) startReviewGame(currentModalContext.date, currentModalContext.slot); };
 document.getElementById('modal-retry-btn').onclick = () => { closeModal(); if(currentModalContext) startRetryGame(currentModalContext.date, currentModalContext.slot); };
 
-// --- DATA FETCHING & PROCESSING (NEW LOCAL JSON) ---
+// --- DATA FETCHING & PROCESSING (UPDATED FOR NEW FORMAT) ---
 
 function fetchDataForCountry(country) {
     document.getElementById('loader').style.display = 'block';
     document.getElementById('game-ui').style.display = 'none';
     
-    // Slight timeout to simulate loading (optional, prevents flickering)
     setTimeout(() => {
-        // Look up data in the global object
+        // Look up by Country Name
         const data = EXPORTS_DATA[country.name];
         
         if (!data) {
@@ -885,82 +1044,83 @@ function fetchDataForCountry(country) {
 
 function processData(countryData) {
     const totalExports = countryData.meta.total_exports;
-    
     document.getElementById('total-export-display').textContent = `Total: $${(totalExports/1e9).toFixed(2)} B`;
     
-    // 1. Create a map of Sections based on SECTION_MAPPING
+    // 1. Initialize Section Map using Section IDs
     const sectionMap = {};
-    SECTION_MAPPING.forEach(s => {
-        sectionMap[s.jsonName] = {
-            id: s.id,
-            name: s.jsonName,
-            color: s.color,
-            totalValue: countryData.sections[s.jsonName] || 0, 
+    SECTION_MAPPING.forEach(conf => {
+        // Name comes from the external dictionary using the numeric ID
+        const sectionName = SECTIONS_DICT[conf.id] || "Unknown Section";
+        // Value comes from exports.json -> sections -> "1", "2" etc.
+        const totalVal = countryData.sections[conf.id.toString()] || 0;
+
+        sectionMap[conf.id] = {
+            id: conf.id,
+            name: sectionName,
+            color: conf.color,
+            totalValue: totalVal,
             children: []
         };
     });
 
-    // 2. Distribute products into sections
+    // 2. Distribute Products into Sections
     const topProducts = countryData.top_products || [];
-    
-    // --- SET THRESHOLD: 0.05% (0.0005) ---
-    const threshold = totalExports * 0.0005; 
+    const threshold = totalExports * 0.0005; // 0.05% threshold
     
     topProducts.forEach(prod => {
-        // --- FILTER: Ignore products smaller than 0.05% ---
-        if (prod.value < threshold) return;
+        // prod format: { "id": "2709", "v": 12345, "s": 0.5 }
+        if (prod.v < threshold) return;
 
-        let hsString = prod.hs4_id.toString();
+        // Lookup Name from HS4 Dictionary
+        const prodName = HS4_MAP[prod.id] || "Unknown Product (" + prod.id + ")";
+
+        // Determine Section based on HS Chapter
+        let hsString = prod.id.toString();
         let chapter;
-        
-        // Robust HS Chapter extraction from OEC IDs (e.g., 52709 -> 27, 147108 -> 71)
-        if (hsString.length === 5) {
+        if (hsString.length === 5) { // e.g. 52709 -> 27
             chapter = parseInt(hsString.substring(1, 3));
         } else if (hsString.length === 6) {
             chapter = parseInt(hsString.substring(2, 4));
         } else {
-            // Fallback for standard 4-digit codes or other formats
-             chapter = parseInt(hsString.substring(0, hsString.length - 2));
+            // Standard 4 digit (2709) -> 27
+            chapter = parseInt(hsString.substring(0, hsString.length - 2));
         }
 
-        // Find which section this chapter belongs to
+        // Find which section matches this chapter
         const sectionConfig = SECTION_MAPPING.find(s => s.chapters.includes(chapter));
         
+        // Push to children
         if (sectionConfig) {
-            const mapEntry = sectionMap[sectionConfig.jsonName];
-            if (mapEntry) {
-                mapEntry.children.push({
-                    name: prod.hs4_name,
-                    value: prod.value,
-                    code: prod.hs4_id
+            sectionMap[sectionConfig.id].children.push({
+                name: prodName,
+                value: prod.v,
+                code: prod.id
+            });
+        } else {
+            // Fallback (usually ID 22 for Unspecified)
+            if (sectionMap[22]) {
+                 sectionMap[22].children.push({
+                    name: prodName,
+                    value: prod.v,
+                    code: prod.id
                 });
             }
-        } else {
-            // If mapping fails, put in Unspecified
-            sectionMap["Unspecified"].children.push({
-                name: prod.hs4_name,
-                value: prod.value,
-                code: prod.hs4_id
-            });
         }
     });
 
-    // 3. Construct the Final Tree
+    // 3. Construct Final Tree
     const finalTree = [];
     
     Object.values(sectionMap).forEach(sec => {
+        // Skip empty sections
         if (sec.totalValue <= 0 && sec.children.length === 0) return;
 
-        // Calculate size of "Other" (products not in top list or filtered out by threshold)
         const childrenSum = sec.children.reduce((acc, c) => acc + c.value, 0);
         let otherValue = sec.totalValue - childrenSum;
-        
         if (otherValue < 0) otherValue = 0;
 
-        // Prepare children array
         const children = [...sec.children];
         
-        // Only add "Other" box if it's significant (also using a small visual threshold of 0.01% for the 'Other' box itself)
         if (otherValue > (totalExports * 0.0001)) {
             children.push({
                 name: "Other " + sec.name,
@@ -981,12 +1141,11 @@ function processData(countryData) {
     generateChart(finalTree, totalExports);
 }
 
-// --- TREEMAP ENGINE ---
+// --- TREEMAP ENGINE (UNCHANGED) ---
 class TreemapLayout {
     constructor(w,h){this.w=w;this.h=h}
     calculate(data){
         const total=data.reduce((s,i)=>s+i.value,0), area=this.w*this.h;
-        // Protection against divide by zero if total is 0
         if(total <= 0) return [];
         const items=data.map(i=>({...i, area:(i.value/total)*area})).sort((a,b)=>b.value-a.value);
         return this.squarify(items,[],{x:0,y:0,w:this.w,h:this.h});
@@ -1021,7 +1180,6 @@ function generateChart(data, total) {
     const svg = document.getElementById('treemap-svg'), legend = document.getElementById('legend');
     svg.innerHTML=''; legend.innerHTML='';
     
-    // Canvas setup
     const width=1000, height=window.innerWidth<768?1200:500;
     svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
     
@@ -1031,7 +1189,6 @@ function generateChart(data, total) {
     }
 
     new TreemapLayout(width,height).calculate(data).forEach(sec => {
-        // Legend
         const l = document.createElement('div'); l.className='legend-item'; l.style.backgroundColor=sec.color;
         l.title = sec.name;
         l.onmouseenter=()=>highlight(sec.id); l.onmouseleave=resetHighlight;
@@ -1041,7 +1198,6 @@ function generateChart(data, total) {
         g.setAttribute("class","section-group"); g.id=`g-${sec.id}`;
         
         new TreemapLayout(sec.w,sec.h).calculate(sec.children).forEach(child => {
-            // Draw Rectangle
             const r = document.createElementNS("http://www.w3.org/2000/svg","rect");
             r.setAttribute("x", sec.x+child.x); r.setAttribute("y", sec.y+child.y);
             r.setAttribute("width", Math.max(0, child.w)); r.setAttribute("height", Math.max(0, child.h));
@@ -1050,15 +1206,10 @@ function generateChart(data, total) {
             r.onmousemove=(e)=>showTooltip(e,child,total,sec.name); r.onmouseleave=hideTooltip;
             g.appendChild(r);
 
-            // --- TEXT LAYOUT ENGINE v5 (Dynamic & Breathable) ---
-            
             if(child.w > 35 && child.h > 20) {
-                
                 const boxW = child.w;
                 const boxH = child.h;
                 const text = child.name;
-                
-                // CONSTANTS
                 const FLOOR = 10; 
                 const MAX_FONT = 40; 
                 const CHAR_CONST = 0.55; 
@@ -1069,7 +1220,6 @@ function generateChart(data, total) {
 
                 let rendered = false;
 
-                // --- STRATEGY 1: FIRST-WORD STACK ---
                 if (text.includes(" ")) {
                     const firstSpace = text.indexOf(" ");
                     const w1 = text.substring(0, firstSpace);
@@ -1077,22 +1227,17 @@ function generateChart(data, total) {
 
                     const fsStackW = getFontSizeForWidth(w1, boxW * 0.9);
                     const fsStackH = boxH / 3.5;
-                    
                     let fsStack = Math.min(fsStackW, fsStackH, MAX_FONT);
 
                     if (fsStack >= FLOOR) {
-                        // FIX: Added +0.1 buffer to prevent 4.99 flooring to 4
                         const maxChars = Math.floor(((boxW * 0.9) / (fsStack * CHAR_CONST)) + 0.1);
                         let line2Text = w2;
                         let validStack = true;
 
                         if (w2.length > maxChars) {
                             const avail = Math.max(0, maxChars - 2);
-                            if (avail < 1) { // ".." check
-                                validStack = false; 
-                            } else {
-                                line2Text = w2.substring(0, avail) + "..";
-                            }
+                            if (avail < 1) validStack = false; 
+                            else line2Text = w2.substring(0, avail) + "..";
                         }
 
                         if (validStack) {
@@ -1132,27 +1277,19 @@ function generateChart(data, total) {
                     }
                 }
 
-                // --- STRATEGY 2: SINGLE LINE FALLBACK ---
                 if (!rendered) {
                     const fsSingleW = getFontSizeForWidth(text, boxW * 0.9);
                     const fsSingleH = boxH * 0.7; 
-                    
                     let fsSingle = Math.min(fsSingleW, fsSingleH, MAX_FONT);
-
                     if (fsSingle < FLOOR) fsSingle = FLOOR;
                     
-                    // FIX: Added +0.1 buffer here as well
                     const maxChars = Math.floor(((boxW * 0.9) / (fsSingle * CHAR_CONST)) + 0.1);
                     let finalText = "";
                     
-                    if (text.length <= maxChars) {
-                        finalText = text; 
-                    } else {
+                    if (text.length <= maxChars) finalText = text; 
+                    else {
                         const visibleChars = maxChars - 2;
-                        // Threshold kept at 6 as requested
-                        if (visibleChars >= 6) {
-                            finalText = text.substring(0, visibleChars) + "..";
-                        }
+                        if (visibleChars >= 6) finalText = text.substring(0, visibleChars) + "..";
                     }
 
                     if (finalText !== "") {
