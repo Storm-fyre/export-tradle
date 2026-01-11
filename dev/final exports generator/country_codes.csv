@@ -1,0 +1,193 @@
+country_code,country_name,country_iso2,country_iso3
+842,USA,US,USA
+156,China,CN,CHN
+276,Germany,DE,DEU
+392,Japan,JP,JPN
+699,India,IN,IND
+826,United Kingdom,GB,GBR
+251,France,FR,FRA
+380,Italy,IT,ITA
+124,Canada,CA,CAN
+76,Brazil,BR,BRA
+643,Russian Federation,RU,RUS
+410,South Korea,KR,KOR
+484,Mexico,MX,MEX
+36,Australia,AU,AUS
+724,Spain,ES,ESP
+360,Indonesia,ID,IDN
+792,Turkiye,TR,TUR
+682,Saudi Arabia,SA,SAU
+528,Netherlands,NL,NLD
+757,Switzerland,CH,CHE
+616,Poland,PL,POL
+56,Belgium,BE,BEL
+32,Argentina,AR,ARG
+752,Sweden,SE,SWE
+372,Ireland,IE,IRL
+40,Austria,AT,AUT
+784,United Arab Emirates,AE,ARE
+764,Thailand,TH,THA
+376,Israel,IL,ISR
+702,Singapore,SG,SGP
+579,Norway,NO,NOR
+50,Bangladesh,BD,BGD
+704,Vietnam,VN,VNM
+608,Philippines,PH,PHL
+364,Iran,IR,IRN
+458,Malaysia,MY,MYS
+208,Denmark,DK,DNK
+170,Colombia,CO,COL
+818,Egypt,EG,EGY
+710,South Africa,ZA,ZAF
+642,Romania,RO,ROU
+586,Pakistan,PK,PAK
+152,Chile,CL,CHL
+203,Czechia,CZ,CZE
+246,Finland,FI,FIN
+620,Portugal,PT,PRT
+398,Kazakhstan,KZ,KAZ
+604,Peru,PE,PER
+12,Algeria,DZ,DZA
+368,Iraq,IQ,IRQ
+554,New Zealand,NZ,NZL
+566,Nigeria,NG,NGA
+300,Greece,GR,GRC
+634,Qatar,QA,QAT
+348,Hungary,HU,HUN
+192,Cuba,CU,CUB
+231,Ethiopia,ET,ETH
+804,Ukraine,UA,UKR
+414,Kuwait,KW,KWT
+504,Morocco,MA,MAR
+703,Slovakia,SK,SVK
+214,Dominican Rep.,DO,DOM
+218,Ecuador,EC,ECU
+862,Venezuela,VE,VEN
+320,Guatemala,GT,GTM
+404,Kenya,KE,KEN
+100,Bulgaria,BG,BGR
+860,Uzbekistan,UZ,UZB
+512,Oman,OM,OMN
+24,Angola,AO,AGO
+442,Luxembourg,LU,LUX
+144,Sri Lanka,LK,LKA
+834,Tanzania,TZ,TZA
+795,Turkmenistan,TM,TKM
+858,Uruguay,UY,URY
+288,Ghana,GH,GHA
+191,Croatia,HR,HRV
+591,Panama,PA,PAN
+384,Cote d'Ivoire,CI,CIV
+688,Serbia,RS,SRB
+188,Costa Rica,CR,CRI
+112,Belarus,BY,BLR
+440,Lithuania,LT,LTU
+31,Azerbaijan,AZ,AZE
+180,Dem. Rep. of the Congo,CD,COD
+705,Slovenia,SI,SVN
+104,Myanmar,MM,MMR
+400,Jordan,JO,JOR
+800,Uganda,UG,UGA
+788,Tunisia,TN,TUN
+120,Cameroon,CM,CMR
+434,Libya,LY,LBY
+48,Bahrain,BH,BHR
+68,Bolivia,BO,BOL
+600,Paraguay,PY,PRY
+428,Latvia,LV,LVA
+524,Nepal,NP,NPL
+233,Estonia,EE,EST
+716,Zimbabwe,ZW,ZWE
+222,El Salvador,SV,SLV
+598,Papua New Guinea,PG,PNG
+340,Honduras,HN,HND
+408,North Korea,KP,PRK
+116,Cambodia,KH,KHM
+686,Senegal,SN,SEN
+352,Iceland,IS,ISL
+729,Sudan,SD,SDN
+894,Zambia,ZM,ZMB
+780,Trinidad and Tobago,TT,TTO
+196,Cyprus,CY,CYP
+268,Georgia,GE,GEO
+70,Bosnia Herzegovina,BA,BIH
+51,Armenia,AM,ARM
+266,Gabon,GA,GAB
+324,Guinea,GN,GIN
+854,Burkina Faso,BF,BFA
+466,Mali,ML,MLI
+4,Afghanistan,AF,AFG
+8,Albania,AL,ALB
+508,Mozambique,MZ,MOZ
+887,Yemen,YE,YEM
+470,Malta,MT,MLT
+204,Benin,BJ,BEN
+72,Botswana,BW,BWA
+275,State of Palestine,PS,PSE
+332,Haiti,HT,HTI
+496,Mongolia,MN,MNG
+328,Guyana,GY,GUY
+388,Jamaica,JM,JAM
+562,Niger,NE,NER
+760,Syria,SY,SYR
+450,Madagascar,MG,MDG
+558,Nicaragua,NI,NIC
+807,North Macedonia,MK,MKD
+422,Lebanon,LB,LBN
+498,Moldova,MD,MDA
+418,Laos,LA,LAO
+178,Rep. of the Congo,CG,COG
+44,Bahamas,BS,BHS
+96,Brunei Darussalam,BN,BRN
+148,Chad,TD,TCD
+226,Equatorial Guinea,GQ,GNQ
+516,Namibia,NA,NAM
+646,Rwanda,RW,RWA
+417,Kyrgyzstan,KG,KGZ
+762,Tajikistan,TJ,TJK
+454,Malawi,MW,MWI
+480,Mauritius,MU,MUS
+478,Mauritania,MR,MRT
+706,Somalia,SO,SOM
+768,Togo,TG,TGO
+462,Maldives,MV,MDV
+499,Montenegro,ME,MNE
+728,South Sudan,SS,SSD
+52,Barbados,BB,BRB
+242,Fiji,FJ,FJI
+748,Eswatini,SZ,SWZ
+430,Liberia,LR,LBR
+694,Sierra Leone,SL,SLE
+262,Djibouti,DJ,DJI
+740,Suriname,SR,SUR
+20,Andorra,AD,AND
+64,Bhutan,BT,BTN
+108,Burundi,BI,BDI
+84,Belize,BZ,BLZ
+140,Central African Rep.,CF,CAF
+232,Eritrea,ER,ERI
+270,Gambia,GM,GMB
+132,Cabo Verde,CV,CPV
+662,Saint Lucia,LC,LCA
+426,Lesotho,LS,LSO
+624,Guinea-Bissau,GW,GNB
+626,Timor-Leste,TL,TLS
+690,Seychelles,SC,SYC
+28,Antigua and Barbuda,AG,ATG
+674,San Marino,SM,SMR
+90,Solomon Isds,SB,SLB
+174,Comoros,KM,COM
+308,Grenada,GD,GRD
+548,Vanuatu,VU,VUT
+659,Saint Kitts and Nevis,KN,KNA
+670,Saint Vincent and the Grenadines,VC,VCT
+882,Samoa,WS,WSM
+212,Dominica,DM,DMA
+678,Sao Tome and Principe,ST,STP
+776,Tonga,TO,TON
+583,Micronesia,FM,FSM
+584,Marshall Islands,MH,MHL
+585,Palau,PW,PLW
+296,Kiribati,KI,KIR
+520,Nauru,NR,NRU
+798,Tuvalu,TV,TUV
