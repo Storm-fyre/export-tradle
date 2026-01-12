@@ -5,11 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tradle: Daily Export Guessing Game</title>
     <style>
-        /* --- CSS STYLES (UNCHANGED) --- */
+        /* --- CSS STYLES --- */
 
         /* Reset & Base */
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f7f9; margin: 0; padding: 0.5rem; color: #333; }
-        .container { max-width: 1100px; margin: 0 auto; background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); min-height: 90vh; }
+        
+        /* Global Loader (New) */
+        #global-loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #f4f7f9; z-index: 10000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid #ddd; border-top: 4px solid #2c3e50;
+            border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Container - Hidden initially to prevent FOUC */
+        .container { max-width: 1100px; margin: 0 auto; background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); min-height: 90vh; display: none; }
 
         /* Navigation Tabs */
         .nav-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
@@ -155,7 +169,13 @@
 </head>
 <body>
 
-<div class="container">
+<!-- Global Loader -->
+<div id="global-loader">
+    <div class="spinner"></div>
+    <div>Loading Tradle Data...</div>
+</div>
+
+<div class="container" id="main-container">
     <header>
         <h1 id="app-title">Tradle</h1>
         <div class="subtitle">Guess the Exporter based on 2022 Trade Data</div>
@@ -163,13 +183,13 @@
 
     <!-- Navigation -->
     <div class="nav-tabs">
-        <div class="nav-tab active" onclick="switchTab('daily')">Daily Challenge</div>
-        <div class="nav-tab" onclick="switchTab('practice')">Practice</div>
+        <div class="nav-tab" onclick="switchTab('daily')">Daily Challenge</div>
+        <div class="nav-tab active" onclick="switchTab('practice')">Practice</div>
         <div class="nav-tab" onclick="switchTab('history')">History</div>
     </div>
 
     <!-- TAB 1: DAILY DASHBOARD -->
-    <div id="tab-daily" class="screen active">
+    <div id="tab-daily" class="screen">
         <div class="daily-dashboard">
             <div class="daily-header">Daily Puzzles (<span id="daily-date-display">---</span>)</div>
             
@@ -183,8 +203,8 @@
         </div>
     </div>
 
-    <!-- TAB 2: PRACTICE -->
-    <div id="tab-practice" class="screen">
+    <!-- TAB 2: PRACTICE (Set to Active by Default) -->
+    <div id="tab-practice" class="screen active">
         <div style="text-align: center; padding: 40px;">
             <h3>Practice Mode</h3>
             <p>Play unlimited games with random countries.</p>
@@ -273,7 +293,6 @@ let HS4_MAP = {};
 let SECTIONS_DICT = {};
 
 // --- CONFIGURATION ---
-// Maps Section ID (numeric) to Color and HS Chapters. Names are loaded from sections.json
 const SECTION_MAPPING = [
     { id: 1, color: "#F0E68C", chapters: [1,2,3,4,5] },
     { id: 2, color: "#FDC02F", chapters: [6,7,8,9,10,11,12,13,14] },
@@ -299,7 +318,6 @@ const SECTION_MAPPING = [
     { id: 22, color: "#A9A9A9", chapters: [] }
 ];
 
-// Updated to use ISO 3-letter codes as IDs to match new JSON metadata
 const COUNTRIES = [
   {"name": "United States", "id": "USA"},
   {"name": "China", "id": "China"},
@@ -568,7 +586,6 @@ let gameState = {
 // --- INITIALIZATION ---
 async function startApp() {
     try {
-        // Updated Promise.all to fetch new optimization files
         const [distRes, dirRes, expRes, hs4Res, secRes] = await Promise.all([ 
             fetch('distances.json'), 
             fetch('directions.json'),
@@ -583,12 +600,23 @@ async function startApp() {
         HS4_MAP = await hs4Res.json();
         SECTIONS_DICT = await secRes.json();
         
+        // Data is ready, initialize and show UI
         initTabs();
         updateDailyDashboard();
         renderHistory();
         startCountdown();
+
+        // Hide Global Loader and Show Main Container
+        document.getElementById('global-loader').style.display = 'none';
+        document.getElementById('main-container').style.display = 'block';
+
     } catch (err) {
-        alert("Error loading game files. Ensure distances.json, directions.json, exports.json, hs4.json, and sections.json are present.");
+        // Show error in global loader if fetch fails
+        document.querySelector('#global-loader').innerHTML = 
+            `<div style="color:red; font-weight:bold; padding:20px; text-align:center;">
+                Error loading game files.<br>Please refresh or check your connection.<br>
+                <small>${err.message}</small>
+            </div>`;
         console.error(err);
     }
 }
@@ -1020,7 +1048,7 @@ function closeModal() { document.getElementById('action-modal').style.display = 
 document.getElementById('modal-view-btn').onclick = () => { closeModal(); if(currentModalContext) startReviewGame(currentModalContext.date, currentModalContext.slot); };
 document.getElementById('modal-retry-btn').onclick = () => { closeModal(); if(currentModalContext) startRetryGame(currentModalContext.date, currentModalContext.slot); };
 
-// --- DATA FETCHING & PROCESSING (UPDATED FOR NEW FORMAT) ---
+// --- DATA FETCHING & PROCESSING ---
 
 function fetchDataForCountry(country) {
     document.getElementById('loader').style.display = 'block';
