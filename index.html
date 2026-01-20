@@ -1,3 +1,5 @@
+--- START OF FILE index.html ---
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -721,7 +723,7 @@ function startPracticeGame() {
 function giveUpPractice() {
     if (confirm("Are you sure you want to give up? The answer will be revealed.")) {
         gameState.lives = 0;
-        document.getElementById('lives-count').textContent = "💔"; 
+        document.getElementById('lives-count').textContent = "💔".repeat(5); 
         endGame(false);
     }
 }
@@ -774,7 +776,7 @@ function initGame(mode, targetIdx, slot = null, historicalGuesses = [], savedLiv
     document.getElementById('guess-history').innerHTML = '';
     document.getElementById('message-area').textContent = '';
     document.getElementById('message-area').className = '';
-    document.getElementById('lives-count').textContent = "❤️".repeat(gameState.lives);
+    document.getElementById('lives-count').textContent = "❤️".repeat(gameState.lives) + "💔".repeat(5 - gameState.lives);
     
     const input = document.getElementById('guess-input');
     const btn = document.getElementById('guess-btn');
@@ -872,7 +874,7 @@ function handleGuess() {
         endGame(true);
     } else {
         gameState.lives--;
-        document.getElementById('lives-count').textContent = "❤️".repeat(gameState.lives);
+        document.getElementById('lives-count').textContent = "❤️".repeat(gameState.lives) + "💔".repeat(5 - gameState.lives);
         if (gameState.lives <= 0) endGame(false);
     }
 
