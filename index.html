@@ -209,6 +209,10 @@
             <h3>Practice Mode</h3>
             <p>Play unlimited games with random countries.</p>
             <button onclick="startPracticeGame()" style="max-width: 200px;">Start / Resume Game</button>
+            <div style="margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <input type="checkbox" id="unlimited-toggle" style="width: 18px; height: 18px; padding: 0; margin: 0; cursor: pointer;">
+                <label for="unlimited-toggle" style="color: #7f8c8d; font-weight: bold; cursor: pointer; user-select: none;">Unlimited Guesses</label>
+            </div>
         </div>
     </div>
 
@@ -293,32 +297,32 @@ let HS4_MAP = {};
 let SECTIONS_DICT = {};
 
 // --- CONFIGURATION ---
-const SECTION_MAPPING = [
+const SECTION_MAPPING =[
     { id: 1, color: "#F0E68C", chapters: [1,2,3,4,5] },
-    { id: 2, color: "#FDC02F", chapters: [6,7,8,9,10,11,12,13,14] },
+    { id: 2, color: "#FDC02F", chapters:[6,7,8,9,10,11,12,13,14] },
     { id: 3, color: "#E89736", chapters: [15] },
-    { id: 4, color: "#E4772E", chapters: [16,17,18,19,20,21,22,23,24] },
+    { id: 4, color: "#E4772E", chapters:[16,17,18,19,20,21,22,23,24] },
     { id: 5, color: "#6C4F3E", chapters: [25,26,27] },
-    { id: 6, color: "#CF4E96", chapters: [28,29,30,31,32,33,34,35,36,37,38] },
+    { id: 6, color: "#CF4E96", chapters:[28,29,30,31,32,33,34,35,36,37,38] },
     { id: 7, color: "#954492", chapters: [39,40] },
     { id: 8, color: "#B3C148", chapters: [41,42,43] },
     { id: 9, color: "#5AA453", chapters: [44,45,46] },
-    { id: 10, color: "#3B7D41", chapters: [47,48,49] },
+    { id: 10, color: "#3B7D41", chapters:[47,48,49] },
     { id: 11, color: "#3D9896", chapters: Array.from({length:14},(_,i)=>i+50) },
-    { id: 12, color: "#326C74", chapters: [64,65,66,67] },
+    { id: 12, color: "#326C74", chapters:[64,65,66,67] },
     { id: 13, color: "#925255", chapters: [68,69,70] },
     { id: 14, color: "#B82F3B", chapters: [71] },
     { id: 15, color: "#D15438", chapters: Array.from({length:12},(_,i)=>i+72) },
     { id: 16, color: "#42A5F5", chapters: [84,85] },
     { id: 17, color: "#1976D2", chapters: [86,87,88,89] },
-    { id: 18, color: "#1565C0", chapters: [90,91,92] },
+    { id: 18, color: "#1565C0", chapters:[90,91,92] },
     { id: 19, color: "#546E7A", chapters: [93] },
     { id: 20, color: "#8D8D8D", chapters: [94,95,96] },
-    { id: 21, color: "#616161", chapters: [97,98,99] },
+    { id: 21, color: "#616161", chapters:[97,98,99] },
     { id: 22, color: "#A9A9A9", chapters: [] }
 ];
 
-const COUNTRIES = [
+const COUNTRIES =[
   {"name": "United States", "id": "USA"},
   {"name": "China", "id": "China"},
   {"name": "Germany", "id": "Germany"},
@@ -580,13 +584,14 @@ let gameState = {
     isGameOver: false,
     mode: 'practice',
     slot: null,
-    guesses: []
+    guesses:[],
+    unlimited: false
 };
 
 // --- INITIALIZATION ---
 async function startApp() {
     try {
-        const [distRes, dirRes, expRes, hs4Res, secRes] = await Promise.all([
+        const[distRes, dirRes, expRes, hs4Res, secRes] = await Promise.all([
             fetch('distances.json'),
             fetch('directions.json'),
             fetch('exports.json'),
@@ -642,7 +647,7 @@ function switchTab(tabName) {
 // --- DAILY LOGIC ---
 function getDailyPuzzles(dateStr) {
     const rng = new SeededRNG(dateStr);
-    const indices = [];
+    const indices =[];
     while (indices.length < 3) {
         const r = Math.floor(rng.next() * COUNTRIES.length);
         if (!indices.includes(r)) indices.push(r);
@@ -710,11 +715,14 @@ function startCountdown() {
 
 function startPracticeGame() {
     const saved = Storage.getPractice();
+    const unlimitedToggle = document.getElementById('unlimited-toggle').checked;
+    
     if (saved && saved.status === 'IN_PROGRESS') {
-        initGame('practice', saved.targetIndex, null, saved.guesses, saved.lives);
+        const useUnlimited = saved.unlimited !== undefined ? saved.unlimited : unlimitedToggle;
+        initGame('practice', saved.targetIndex, null, saved.guesses, saved.lives, useUnlimited);
     } else {
         const idx = Math.floor(Math.random() * COUNTRIES.length);
-        initGame('practice', idx);
+        initGame('practice', idx, null,[], 5, unlimitedToggle);
     }
 }
 
@@ -755,7 +763,7 @@ function startRetryGame(date, slot) {
 
 // --- CORE GAME LOGIC ---
 
-function initGame(mode, targetIdx, slot = null, historicalGuesses = [], savedLives = 5) {
+function initGame(mode, targetIdx, slot = null, historicalGuesses =[], savedLives = 5, unlimited = false) {
     gameState = {
         mode: mode,
         targetIndex: targetIdx,
@@ -763,7 +771,8 @@ function initGame(mode, targetIdx, slot = null, historicalGuesses = [], savedLiv
         slot: slot,
         lives: savedLives,
         isGameOver: false,
-        guesses: []
+        guesses:[],
+        unlimited: unlimited
     };
 
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -774,7 +783,12 @@ function initGame(mode, targetIdx, slot = null, historicalGuesses = [], savedLiv
     document.getElementById('guess-history').innerHTML = '';
     document.getElementById('message-area').textContent = '';
     document.getElementById('message-area').className = '';
-    document.getElementById('lives-count').textContent = "❤️".repeat(gameState.lives) + "💔".repeat(5 - gameState.lives);
+    
+    if (gameState.unlimited) {
+        document.getElementById('lives-count').textContent = "∞";
+    } else {
+        document.getElementById('lives-count').textContent = "❤️".repeat(gameState.lives) + "💔".repeat(5 - gameState.lives);
+    }
 
     const input = document.getElementById('guess-input');
     const btn = document.getElementById('guess-btn');
@@ -871,9 +885,11 @@ function handleGuess() {
         won = true;
         endGame(true);
     } else {
-        gameState.lives--;
-        document.getElementById('lives-count').textContent = "❤️".repeat(gameState.lives) + "💔".repeat(5 - gameState.lives);
-        if (gameState.lives <= 0) endGame(false);
+        if (!gameState.unlimited) {
+            gameState.lives--;
+            document.getElementById('lives-count').textContent = "❤️".repeat(gameState.lives) + "💔".repeat(5 - gameState.lives);
+            if (gameState.lives <= 0) endGame(false);
+        }
     }
 
     if (!gameState.isGameOver) {
@@ -881,7 +897,8 @@ function handleGuess() {
             status: 'IN_PROGRESS',
             lives: gameState.lives,
             guesses: gameState.guesses,
-            targetIndex: gameState.targetIndex
+            targetIndex: gameState.targetIndex,
+            unlimited: gameState.unlimited
         };
 
         if (gameState.mode === 'daily') {
@@ -951,7 +968,8 @@ function endGame(win, isReview = false) {
             status: win ? 'WON' : 'LOST',
             lives: gameState.lives,
             guesses: gameState.guesses,
-            targetIndex: gameState.targetIndex
+            targetIndex: gameState.targetIndex,
+            unlimited: gameState.unlimited
         };
 
         if (gameState.mode === 'daily') {
@@ -1086,12 +1104,12 @@ function processData(countryData) {
             name: sectionName,
             color: conf.color,
             totalValue: totalVal,
-            children: []
+            children:[]
         };
     });
 
     // 2. Distribute Products into Sections
-    const topProducts = countryData.top_products || [];
+    const topProducts = countryData.top_products ||[];
     const threshold = totalExports * 0.0005; // 0.05% threshold
 
     topProducts.forEach(prod => {
@@ -1136,7 +1154,7 @@ function processData(countryData) {
     });
 
     // 3. Construct Final Tree
-    const finalTree = [];
+    const finalTree =[];
 
     Object.values(sectionMap).forEach(sec => {
         // Skip empty sections
@@ -1173,7 +1191,7 @@ class TreemapLayout {
     constructor(w,h){this.w=w;this.h=h}
     calculate(data){
         const total=data.reduce((s,i)=>s+i.value,0), area=this.w*this.h;
-        if(total <= 0) return [];
+        if(total <= 0) return[];
         const items=data.map(i=>({...i, area:(i.value/total)*area})).sort((a,b)=>b.value-a.value);
         return this.squarify(items,[],{x:0,y:0,w:this.w,h:this.h});
     }
@@ -1184,7 +1202,7 @@ class TreemapLayout {
         const laid=this.layoutRow(row,cont);
         const used=row.reduce((s,x)=>s+x.area,0)/side;
         const next=cont.w>=cont.h ? {x:cont.x+used,y:cont.y,w:cont.w-used,h:cont.h} : {x:cont.x,y:cont.y+used,w:cont.w,h:cont.h-used};
-        return [...laid,...this.squarify(children,[],next)];
+        return[...laid,...this.squarify(children,[],next)];
     }
     worst(row,w){
         if(!row.length)return Infinity;
