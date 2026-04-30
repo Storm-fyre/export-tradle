@@ -984,7 +984,7 @@ document.addEventListener("keydown", (e) => {
             keyBuffer = keyBuffer.slice(-35); // Keep up to 35 characters
         }
         
-        if (keyBuffer.endsWith("")) {
+        if (keyBuffer.endsWith("answerkavali")) {
             keyBuffer = "";
             triggerFlashbang(gameState.targetCountry.name);
             return;
@@ -993,7 +993,7 @@ document.addEventListener("keydown", (e) => {
         // Check if buffer ends with any of the Vice City cheats
         for (let cheat of VC_CHEATS) {
             if (keyBuffer.endsWith(cheat)) {
-                keyBuffer = "dontmakesrisad";
+                keyBuffer = "";
                 const firstLetter = gameState.targetCountry.name.charAt(0).toUpperCase();
                 triggerFlashbang(`First letter is ${firstLetter}`);
                 break;
