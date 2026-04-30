@@ -114,7 +114,7 @@
         }
 
         .input-wrapper { position: relative; width: 300px; }
-        input { padding: 12px; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
+        input[type="text"] { padding: 12px; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
 
         #suggestions-list {
             position: absolute; top: 100%; left: 0; right: 0; background: white;
@@ -154,34 +154,25 @@
 
         #loader { text-align: center; display: none; margin: 40px; font-size: 1.2rem; color: #2c3e50; }
 
-        /* --- TOGGLE SWITCH --- */
-        .switch-container {
-            display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 20px;
-        }
-        .switch {
-            position: relative; display: inline-block; width: 46px; height: 26px;
-        }
-        .switch input {
-            opacity: 0; width: 0; height: 0;
-        }
-        .slider {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #bdc3c7; transition: .3s; border-radius: 30px;
-        }
-        .slider:before {
-            position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px;
-            background-color: white; transition: .3s; border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        input:checked + .slider {
-            background-color: #2c3e50; /* Matches your primary dark blue theme */
-        }
-        input:checked + .slider:before {
-            transform: translateX(20px);
-        }
-        .switch-label {
-            color: #7f8c8d; font-weight: bold; cursor: pointer; user-select: none; font-size: 0.95rem;
-        }
+        /* --- TOGGLES & SETTINGS --- */
+        .settings-group { max-width: 320px; margin: 20px auto; text-align: left; background: #f8f9fa; padding: 15px 20px; border-radius: 8px; border: 1px solid #e1e4e8; }
+        .settings-group h4 { margin: 0 0 15px 0; color: #2c3e50; text-align: center; font-size: 1.1rem; }
+        
+        .switch-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .switch-row:last-child { margin-bottom: 0; }
+        
+        .switch { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #bdc3c7; transition: .3s; border-radius: 30px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        
+        input:checked + .slider { background-color: #2c3e50; }
+        input:checked + .slider:before { transform: translateX(18px); }
+        
+        #unlimited-toggle:checked + .slider { background-color: #e67e22; }
+        
+        .switch-label { color: #2c3e50; font-weight: bold; cursor: pointer; user-select: none; font-size: 0.95rem; }
+        .tier-count { color: #7f8c8d; font-size: 0.85rem; font-weight: normal; margin-left: 3px; }
 
         /* Mobile */
         @media (max-width: 768px) {
@@ -234,16 +225,40 @@
 
     <!-- TAB 2: PRACTICE (Set to Active by Default) -->
     <div id="tab-practice" class="screen active">
-        <div style="text-align: center; padding: 40px;">
+        <div style="text-align: center; padding: 20px 10px;">
             <h3>Practice Mode</h3>
-            <p>Play unlimited games with random countries.</p>
-            <button onclick="startPracticeGame()" style="max-width: 200px;">Start / Resume Game</button>
-            <div class="switch-container">
-                <label class="switch">
-                    <input type="checkbox" id="unlimited-toggle">
-                    <span class="slider"></span>
-                </label>
-                <label for="unlimited-toggle" class="switch-label">Unlimited Guesses</label>
+            <p style="margin-bottom: 20px;">Play unlimited games with your preferred filters.</p>
+            
+            <button onclick="startPracticeGame()" style="max-width: 250px; margin-bottom: 20px;">Start / Resume Game</button>
+            
+            <div class="settings-group">
+                <!-- Unlimited Toggle -->
+                <div class="switch-row" style="border-bottom: 1px solid #e1e4e8; padding-bottom: 15px; margin-bottom: 15px;">
+                    <label class="switch">
+                        <input type="checkbox" id="unlimited-toggle">
+                        <span class="slider"></span>
+                    </label>
+                    <label for="unlimited-toggle" class="switch-label" style="color: #e67e22;">Unlimited Guesses</label>
+                </div>
+
+                <!-- Weight Classes -->
+                <h4>Weight Classes (Total Exports)</h4>
+                <div class="switch-row">
+                    <label class="switch"><input type="checkbox" id="toggle-heavy" checked><span class="slider"></span></label>
+                    <label for="toggle-heavy" class="switch-label">Heavyweights<span id="count-heavy" class="tier-count">--</span></label>
+                </div>
+                <div class="switch-row">
+                    <label class="switch"><input type="checkbox" id="toggle-middle" checked><span class="slider"></span></label>
+                    <label for="toggle-middle" class="switch-label">Middleweights<span id="count-middle" class="tier-count">--</span></label>
+                </div>
+                <div class="switch-row">
+                    <label class="switch"><input type="checkbox" id="toggle-light" checked><span class="slider"></span></label>
+                    <label for="toggle-light" class="switch-label">Lightweights<span id="count-light" class="tier-count">--</span></label>
+                </div>
+                <div class="switch-row">
+                    <label class="switch"><input type="checkbox" id="toggle-feather" checked><span class="slider"></span></label>
+                    <label for="toggle-feather" class="switch-label">Featherweights<span id="count-feather" class="tier-count">--</span></label>
+                </div>
             </div>
         </div>
     </div>
@@ -327,6 +342,7 @@ let DIRECTIONS = {};
 let EXPORTS_DATA = {};
 let HS4_MAP = {};
 let SECTIONS_DICT = {};
+let COUNTRY_TIERS = [];
 
 // --- CONFIGURATION ---
 const SECTION_MAPPING =[
@@ -334,11 +350,11 @@ const SECTION_MAPPING =[
     { id: 2, color: "#FDC02F", chapters:[6,7,8,9,10,11,12,13,14] },
     { id: 3, color: "#E89736", chapters: [15] },
     { id: 4, color: "#E4772E", chapters:[16,17,18,19,20,21,22,23,24] },
-    { id: 5, color: "#6C4F3E", chapters: [25,26,27] },
+    { id: 5, color: "#6C4F3E", chapters:[25,26,27] },
     { id: 6, color: "#CF4E96", chapters:[28,29,30,31,32,33,34,35,36,37,38] },
     { id: 7, color: "#954492", chapters: [39,40] },
     { id: 8, color: "#B3C148", chapters: [41,42,43] },
-    { id: 9, color: "#5AA453", chapters: [44,45,46] },
+    { id: 9, color: "#5AA453", chapters:[44,45,46] },
     { id: 10, color: "#3B7D41", chapters:[47,48,49] },
     { id: 11, color: "#3D9896", chapters: Array.from({length:14},(_,i)=>i+50) },
     { id: 12, color: "#326C74", chapters:[64,65,66,67] },
@@ -346,7 +362,7 @@ const SECTION_MAPPING =[
     { id: 14, color: "#B82F3B", chapters: [71] },
     { id: 15, color: "#D15438", chapters: Array.from({length:12},(_,i)=>i+72) },
     { id: 16, color: "#42A5F5", chapters: [84,85] },
-    { id: 17, color: "#1976D2", chapters: [86,87,88,89] },
+    { id: 17, color: "#1976D2", chapters:[86,87,88,89] },
     { id: 18, color: "#1565C0", chapters:[90,91,92] },
     { id: 19, color: "#546E7A", chapters: [93] },
     { id: 20, color: "#8D8D8D", chapters: [94,95,96] },
@@ -637,6 +653,26 @@ async function startApp() {
         HS4_MAP = await hs4Res.json();
         SECTIONS_DICT = await secRes.json();
 
+        // Dynamically calculate Weight Classes
+        let counts = { heavy: 0, middle: 0, light: 0, feather: 0 };
+        
+        COUNTRY_TIERS = COUNTRIES.map(c => {
+            let data = EXPORTS_DATA[c.id];
+            if (!data || !data.meta || !data.meta.total_exports) return null; // Failsafe
+            
+            let val = data.meta.total_exports;
+            if (val > 100e9) { counts.heavy++; return 'heavy'; }
+            if (val > 10e9) { counts.middle++; return 'middle'; }
+            if (val > 1e9) { counts.light++; return 'light'; }
+            counts.feather++; return 'feather';
+        });
+
+        // Update UI Counts
+        document.getElementById('count-heavy').textContent = ` — ${counts.heavy} countries`;
+        document.getElementById('count-middle').textContent = ` — ${counts.middle} countries`;
+        document.getElementById('count-light').textContent = ` — ${counts.light} countries`;
+        document.getElementById('count-feather').textContent = ` — ${counts.feather} countries`;
+
         // Data is ready, initialize and show UI
         initTabs();
         updateDailyDashboard();
@@ -749,12 +785,40 @@ function startPracticeGame() {
     const saved = Storage.getPractice();
     const unlimitedToggle = document.getElementById('unlimited-toggle').checked;
     
+    // Check if resuming an existing practice game
     if (saved && saved.status === 'IN_PROGRESS') {
         const useUnlimited = saved.unlimited !== undefined ? saved.unlimited : unlimitedToggle;
         initGame('practice', saved.targetIndex, null, saved.guesses, saved.lives, useUnlimited);
     } else {
-        const idx = Math.floor(Math.random() * COUNTRIES.length);
-        initGame('practice', idx, null,[], 5, unlimitedToggle);
+        // Build valid indices based on selected Weight Classes
+        let activeTiers =[];
+        if (document.getElementById('toggle-heavy').checked) activeTiers.push('heavy');
+        if (document.getElementById('toggle-middle').checked) activeTiers.push('middle');
+        if (document.getElementById('toggle-light').checked) activeTiers.push('light');
+        if (document.getElementById('toggle-feather').checked) activeTiers.push('feather');
+
+        if (activeTiers.length === 0) {
+            alert("Please select at least one Weight Class to play!");
+            return;
+        }
+
+        let validIndices =[];
+        for (let i = 0; i < COUNTRIES.length; i++) {
+            if (COUNTRY_TIERS[i] && activeTiers.includes(COUNTRY_TIERS[i])) {
+                validIndices.push(i);
+            }
+        }
+
+        if (validIndices.length === 0) {
+            alert("No countries match your selection. Please adjust your filters.");
+            return;
+        }
+
+        // Pick random from valid pool
+        const randomPoolIndex = Math.floor(Math.random() * validIndices.length);
+        const targetIdx = validIndices[randomPoolIndex];
+
+        initGame('practice', targetIdx, null,[], 5, unlimitedToggle);
     }
 }
 
@@ -1196,7 +1260,7 @@ function processData(countryData) {
         let otherValue = sec.totalValue - childrenSum;
         if (otherValue < 0) otherValue = 0;
 
-        const children = [...sec.children];
+        const children =[...sec.children];
 
         if (otherValue > (totalExports * 0.0001)) {
             children.push({
