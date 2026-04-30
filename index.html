@@ -360,7 +360,7 @@ let DIRECTIONS = {};
 let EXPORTS_DATA = {};
 let HS4_MAP = {};
 let SECTIONS_DICT = {};
-let COUNTRY_TIERS = [];
+let COUNTRY_TIERS =[];
 
 // --- CONFIGURATION ---
 const SECTION_MAPPING =[
@@ -371,7 +371,7 @@ const SECTION_MAPPING =[
     { id: 5, color: "#6C4F3E", chapters:[25,26,27] },
     { id: 6, color: "#CF4E96", chapters:[28,29,30,31,32,33,34,35,36,37,38] },
     { id: 7, color: "#954492", chapters:[39,40] },
-    { id: 8, color: "#B3C148", chapters: [41,42,43] },
+    { id: 8, color: "#B3C148", chapters:[41,42,43] },
     { id: 9, color: "#5AA453", chapters:[44,45,46] },
     { id: 10, color: "#3B7D41", chapters:[47,48,49] },
     { id: 11, color: "#3D9896", chapters: Array.from({length:14},(_,i)=>i+50) },
@@ -957,6 +957,22 @@ function initGame(mode, targetIdx, slot = null, historicalGuesses =[], savedLive
 
 // --- GAMEPLAY INTERACTION & CHEAT CODES ---
 
+const VC_CHEATS =[
+    "ABITDRIEG", "AHAIRDRESSERSCAR", "AIRSHIP", "ALOVELYDAY", "AMERICAHELICOPTER",
+    "APLEASANTDAY", "ASPIRINE", "BETTERTHANWALKING", "BIGBANG", "BOOOOOOORING",
+    "CANTSEEATHING", "CATSANDDOGS", "CERTAINDEATH", "CHASINGSTAT", "CHEATSHAVEBEENCRACKED",
+    "CHICKSWITHGUNS", "COMEFLYWITHME", "DEEPFRIEDMARSBARS", "EXPANDDOME", "FANNYMAGNET",
+    "FIGHTFIGHTFIGHT", "FLYINGWAYS", "FOXYLITTLETHING", "FREEWAYFORANGELJOY", "FULLCITYPEOPLEMINES",
+    "GETTHEREAMAZINGLYFAST", "GETTHEREFAST", "GETTHEREQUICKLY", "GETTHEREVERYFASTINDEED", "GREENLIGHT",
+    "GRIPISEVERYTHING", "HOPINGIRL", "ICANTTAKEITANYMORE", "IDONTHAVETHEMONEYSONNY", "ILOOKLIKEHILARY",
+    "IWANTBIGTITS", "IWANTITPAINTEDBLACK", "LEAVEMEALONE", "LIFEISPASSINGMEBY", "LOADSOFLITTLETHINGS",
+    "LOOKLIKELANCE", "MIAMITRAFFIC", "MYSONISALAWYER", "NOBODYLIKESME", "NUTTERTOOLS",
+    "ONEARMEDBANDIT", "ONSPEED", "OURGODGIVENRIGHTTOBEARARMS", "PANZER", "PRECIOUSPROTECTION",
+    "PROFESSIONALTOOLS", "PROGRAMMER", "ROCKANDROLLCAR", "ROCKANDROLLMAN", "RUBBISHCAR",
+    "SEAWAYS", "STILLLIKEDRESSINGUP", "THELASTRIDE", "THUGSTOOLS", "TRAVELINSTYLE",
+    "WELOVEOURDICK", "WHEELSAREALLINEED", "YOUCANTLEAVEMEALONE", "YOUWONTTAKEMEALIVE"
+].map(c => c.toLowerCase());
+
 let keyBuffer = "";
 document.addEventListener("keydown", (e) => {
     // Only process for cheat codes in active practice mode
@@ -964,17 +980,24 @@ document.addEventListener("keydown", (e) => {
     
     if (e.key.length === 1) { // ignore shift/ctrl/backspace etc.
         keyBuffer += e.key.toLowerCase();
-        if (keyBuffer.length > 15) {
-            keyBuffer = keyBuffer.slice(-15);
+        if (keyBuffer.length > 35) {
+            keyBuffer = keyBuffer.slice(-35); // Keep up to 35 characters
         }
         
-        if (keyBuffer.endsWith("panzer")) {
-            keyBuffer = "";
-            const firstLetter = gameState.targetCountry.name.charAt(0).toUpperCase();
-            triggerFlashbang(`First letter is ${firstLetter}`);
-        } else if (keyBuffer.endsWith("nuttertools")) {
+        if (keyBuffer.endsWith("answerkavali")) {
             keyBuffer = "";
             triggerFlashbang(gameState.targetCountry.name);
+            return;
+        }
+
+        // Check if buffer ends with any of the Vice City cheats
+        for (let cheat of VC_CHEATS) {
+            if (keyBuffer.endsWith(cheat)) {
+                keyBuffer = "";
+                const firstLetter = gameState.targetCountry.name.charAt(0).toUpperCase();
+                triggerFlashbang(`First letter is ${firstLetter}`);
+                break;
+            }
         }
     }
 });
