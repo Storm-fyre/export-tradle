@@ -33,7 +33,8 @@
 
         /* Header */
         header { text-align: center; margin-bottom: 1rem; }
-        h1 { color: #2c3e50; margin: 0 0 5px 0; font-size: 1.8rem; }
+        /* Added user-select:none so tapping 5 times doesn't highlight text */
+        h1 { color: #2c3e50; margin: 0 0 5px 0; font-size: 1.8rem; user-select: none; } 
         .subtitle { color: #7f8c8d; font-size: 0.9rem; margin-bottom: 1rem; }
 
         /* Screens */
@@ -297,6 +298,23 @@
         </div>
         <div style="text-align:center; padding: 20px; color: #7f8c8d; font-size: 0.9rem;">
             * Tap a row to view the chart and your guesses.
+        </div>
+    </div>
+
+    <!-- TAB 4: EXPLORER (Secret Easter Egg) -->
+    <div id="tab-explorer" class="screen">
+        <div style="text-align: center; padding: 20px 10px;">
+            <h3>🌍 Explorer Mode</h3>
+            <p style="margin-bottom: 20px; color: #7f8c8d;">Secret unlocked! Freely view the export profile of any country.</p>
+            
+            <div class="controls" style="flex-direction: column; align-items: center;">
+                <div class="input-wrapper" style="width: 100%; max-width: 300px; margin: 0 auto; position: relative;">
+                    <input type="text" id="explorer-input" placeholder="Search a country..." autocomplete="off">
+                    <div id="explorer-suggestions-list" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ccc; border-top: none; border-radius: 0 0 4px 4px; max-height: 250px; overflow-y: auto; box-shadow: 0 4px 8px rgba(0,0,0,0.15); display: none; z-index: 1000;"></div>
+                </div>
+            </div>
+            
+            <button onclick="switchTab('practice')" style="margin-top: 30px; background: #7f8c8d;">Close Explorer</button>
         </div>
     </div>
 
@@ -724,7 +742,10 @@ function switchTab(tabName) {
     document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
 
     document.getElementById(`tab-${tabName}`).classList.add('active');
-    document.querySelector(`.nav-tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
+    
+    // Safely add active class to nav tabs if the tab exists (prevents crash on hidden tabs like Explorer)
+    const targetNavTab = document.querySelector(`.nav-tab[onclick="switchTab('${tabName}')"]`);
+    if (targetNavTab) targetNavTab.classList.add('active');
 
     if (tabName === 'daily') updateDailyDashboard();
     if (tabName === 'history') renderHistory();
@@ -903,6 +924,9 @@ function initGame(mode, targetIdx, slot = null, historicalGuesses =[], savedLive
 
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById('game-screen').classList.add('active');
+
+    // Ensure main game controls are visible (in case they were hidden by Explorer Mode)
+    document.getElementById('controls-area').style.display = 'flex';
 
     document.getElementById('game-ui').style.display = 'none';
     document.getElementById('loader').style.display = 'block';
@@ -1176,7 +1200,12 @@ function endGame(win, isReview = false) {
 }
 
 function exitGame() {
-    switchTab('practice');
+    // If the user clicks back from Explorer mode, return to the hidden Explorer menu tab
+    if (gameState.mode === 'explorer') {
+        switchTab('explorer');
+    } else {
+        switchTab('practice');
+    }
 }
 
 // --- HISTORY TABLE LOGIC ---
@@ -1565,6 +1594,81 @@ function showTooltip(e, d, t, s) {
     }
 }
 function hideTooltip(){ document.getElementById('tooltip').style.display='none'; }
+
+// --- EXPLORER MODE (SECRET EASTER EGG) ---
+
+// 1. Easter Egg Trigger
+let titleClickCount = 0;
+let titleClickTimer = null;
+document.getElementById('app-title').addEventListener('click', () => {
+    titleClickCount++;
+    if (titleClickCount === 1) {
+        titleClickTimer = setTimeout(() => { titleClickCount = 0; }, 1000); // Reset window after 1 second
+    }
+    if (titleClickCount >= 5) {
+        clearTimeout(titleClickTimer);
+        titleClickCount = 0;
+        switchTab('explorer');
+    }
+});
+
+// 2. Explorer Search Logic
+const explorerInput = document.getElementById('explorer-input');
+const explorerSuggestions = document.getElementById('explorer-suggestions-list');
+
+explorerInput.addEventListener('input', function() {
+    const val = this.value.trim().toLowerCase();
+    explorerSuggestions.innerHTML = '';
+    if (!val) { explorerSuggestions.style.display = 'none'; return; }
+
+    const matches = COUNTRIES.filter(c => c.name.toLowerCase().startsWith(val));
+    if (matches.length > 0) {
+        explorerSuggestions.style.display = 'block';
+        matches.forEach(match => {
+            const div = document.createElement('div');
+            div.className = 'suggestion-item';
+            div.innerHTML = `<strong>${match.name.substr(0, val.length)}</strong>${match.name.substr(val.length)}`;
+            div.addEventListener('click', () => {
+                explorerInput.value = '';
+                explorerSuggestions.style.display = 'none';
+                launchExplorerChart(match);
+            });
+            explorerSuggestions.appendChild(div);
+        });
+    } else {
+        explorerSuggestions.style.display = 'none';
+    }
+});
+document.addEventListener('click', e => { if(e.target !== explorerInput) explorerSuggestions.style.display='none'; });
+
+// 3. Launch Explorer Chart
+function launchExplorerChart(country) {
+    // Set a pseudo-state to keep the game logic from overriding things
+    gameState = {
+        mode: 'explorer',
+        targetCountry: country,
+        isGameOver: true, 
+        guesses: []
+    };
+
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('game-screen').classList.add('active');
+
+    // Hide input controls and post-game controls since we are just viewing
+    document.getElementById('controls-area').style.display = 'none';
+    document.getElementById('post-game-controls').style.display = 'none';
+    
+    // Clear history and update info bars
+    document.getElementById('guess-history').innerHTML = '';
+    document.getElementById('lives-count').textContent = "∞";
+
+    const msg = document.getElementById('message-area');
+    msg.innerHTML = `<span class="review-mode-banner" style="background:#8e44ad;">Explorer Mode: ${country.name}</span>`;
+    msg.className = "";
+
+    // Reuse existing data fetch and UI setup
+    fetchDataForCountry(country);
+}
 </script>
 </body>
 </html>
